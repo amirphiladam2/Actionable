@@ -15,13 +15,18 @@ A modern, cross-platform task management application built with React Native and
 
 ## Screenshots
 
-### Mobile Screenshots
-<!-- Add your mobile screenshots here -->
-- `screenshots/mobile/` - Mobile app screenshots
+### Mobile App Screenshots
+![Home Screen](screenshots/mobile/s0.jpg)
+![Task Management](screenshots/mobile/s1.jpg)
+![Task Creation](screenshots/mobile/s2.jpg)
+![Settings](screenshots/mobile/s3.jpg)
+![Profile](screenshots/mobile/s4.jpg)
 
-### Desktop Screenshots  
-<!-- Add your desktop screenshots here -->
-- `screenshots/desktop/` - Desktop/web app screenshots
+### Dark Theme Screenshots
+![Dark Theme Home](screenshots/mobile/sd1.jpg)
+![Dark Theme Tasks](screenshots/mobile/sd2.jpg)
+![Dark Theme Settings](screenshots/mobile/sd3.jpg)
+![Dark Theme Profile](screenshots/mobile/sd4.jpg)
 
 ## Setup & Installation
 

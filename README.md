@@ -16,17 +16,25 @@ A modern, cross-platform task management application built with React Native and
 ## Screenshots
 
 ### Mobile App Screenshots
-![Home Screen](screenshots/mobile/s0.jpg)
-![Task Management](screenshots/mobile/s1.jpg)
-![Task Creation](screenshots/mobile/s2.jpg)
-![Settings](screenshots/mobile/s3.jpg)
-![Profile](screenshots/mobile/s4.jpg)
 
-### Dark Theme Screenshots
-![Dark Theme Home](screenshots/mobile/sd1.jpg)
-![Dark Theme Tasks](screenshots/mobile/sd2.jpg)
-![Dark Theme Settings](screenshots/mobile/sd3.jpg)
-![Dark Theme Profile](screenshots/mobile/sd4.jpg)
+#### Light Theme
+<div align="center">
+  <img src="screenshots/mobile/s0.jpg" alt="Home Screen" width="200" style="margin: 10px;">
+  <img src="screenshots/mobile/s1.jpg" alt="Task Management" width="200" style="margin: 10px;">
+  <img src="screenshots/mobile/s2.jpg" alt="Task Creation" width="200" style="margin: 10px;">
+  <br>
+  <img src="screenshots/mobile/s3.jpg" alt="Settings" width="200" style="margin: 10px;">
+  <img src="screenshots/mobile/s4.jpg" alt="Profile" width="200" style="margin: 10px;">
+</div>
+
+#### Dark Theme
+<div align="center">
+  <img src="screenshots/mobile/sd1.jpg" alt="Dark Theme Home" width="200" style="margin: 10px;">
+  <img src="screenshots/mobile/sd2.jpg" alt="Dark Theme Tasks" width="200" style="margin: 10px;">
+  <img src="screenshots/mobile/sd3.jpg" alt="Dark Theme Settings" width="200" style="margin: 10px;">
+  <br>
+  <img src="screenshots/mobile/sd4.jpg" alt="Dark Theme Profile" width="200" style="margin: 10px;">
+</div>
 
 ## Setup & Installation
 

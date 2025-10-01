@@ -1,11 +1,9 @@
 // app/(screens)/_layout.js
-import React from 'react';
 import { Drawer } from 'expo-router/drawer';
-import { Redirect } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import CustomDrawer from '../../components/CustomDrawer';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import CustomDrawer from '../../components/CustomDrawer';
 import { ThemeContext } from '../../context/ThemeContext';
 
 export default function ScreenLayout() {
@@ -64,6 +62,13 @@ export default function ScreenLayout() {
         options={{
           drawerLabel: 'Help & Support',
           title: 'Help & Support',
+        }}
+      />
+      <Drawer.Screen 
+        name="upcoming" 
+        options={{
+          drawerLabel: 'Upcoming Tasks',
+          title: 'Upcoming Tasks',
         }}
       />
       </Drawer>

@@ -1,23 +1,23 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
-  Dimensions,
-  Alert,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Linking from 'expo-linking';
+import { useRouter } from "expo-router";
+import * as WebBrowser from 'expo-web-browser';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+    Alert,
+    Animated,
+    Dimensions,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthStyles from "../../styles/AuthStyles";
-import { useRouter } from "expo-router";
-import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
 WebBrowser.maybeCompleteAuthSession();
 
 import { authService } from "../../services/authService";
@@ -53,7 +53,6 @@ const AuthScreen = () => {
   useEffect(() => {
     const handleUrl = (url) => {
       if (url?.includes('#access_token=') || url?.includes('access_token=')) {
-        console.log('OAuth callback received:', url);
         // Handle the auth callback with our authService
         authService.handleAuthCallback(url).then(result => {
           if (result.success) {

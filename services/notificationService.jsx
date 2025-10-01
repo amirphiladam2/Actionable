@@ -1,12 +1,13 @@
 // services/taskNotificationService.js
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { supabase } from '../lib/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -49,13 +50,11 @@ class TaskNotificationService {
   }
 
   handleForegroundNotification = (notification) => {
-    console.log('📱 Foreground notification:', notification);
     // Store notification in local storage for the notifications page
     this.storeNotificationLocally(notification);
   };
 
   handleNotificationResponse = (response) => {
-    console.log('👆 Notification tapped:', response);
     const { data } = response.notification.request.content;
     
     // Handle different notification types
@@ -75,8 +74,6 @@ class TaskNotificationService {
   async registerForPushNotifications() {
     try {
       if (!this.isPushSupported) {
-        console.log('📱 Push notifications not supported in Expo Go. Use development build for full functionality.');
-        console.log('📱 Local notifications will still work for scheduled tasks.');
         return null;
       }
 
@@ -90,7 +87,6 @@ class TaskNotificationService {
       }
       
       if (finalStatus !== 'granted') {
-        console.log('Push notification permissions not granted');
         return null;
       }
 
@@ -99,24 +95,14 @@ class TaskNotificationService {
       const token = tokenData?.data;
       
       if (!token) {
-        console.log('No push token received');
         return null;
       }
-
-      console.log('📱 Push token obtained:', token);
       
       // Save token to database
       await this.savePushToken(token);
       
       return token;
     } catch (error) {
-      console.error('Error registering for push notifications:', error);
-      
-      // Check if it's the known Expo Go error
-      if (error.message?.includes('removed from Expo Go')) {
-        console.log('📱 Push notifications require a development build. Local notifications will still work.');
-      }
-      
       return null;
     }
   }
@@ -126,13 +112,11 @@ class TaskNotificationService {
     try {
       // Don't save if token is null or undefined
       if (!token) {
-        console.log('No push token to save');
         return;
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('No user found, cannot save push token');
         return;
       }
 
@@ -146,15 +130,13 @@ class TaskNotificationService {
         });
 
       if (error) {
-        console.error('Error saving push token to database:', error);
-      } else {
-        console.log('✅ Push token saved to database');
+        // Silently handle error - token saving is not critical
       }
 
       // Also save locally for offline access
       await AsyncStorage.setItem('push_token', token);
     } catch (error) {
-      console.error('Error saving push token:', error);
+      // Silently handle error - token saving is not critical
     }
   }
 
@@ -163,7 +145,6 @@ class TaskNotificationService {
     try {
       return await AsyncStorage.getItem('push_token');
     } catch (error) {
-      console.error('Error getting push token:', error);
       return null;
     }
   }
@@ -175,7 +156,7 @@ class TaskNotificationService {
       const notifications = stored ? JSON.parse(stored) : [];
       
       const newNotification = {
-        id: notification.request.identifier || Date.now().toString(),
+        id: notification.request.identifier || `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title: notification.request.content.title,
         body: notification.request.content.body,
         data: notification.request.content.data,
@@ -183,14 +164,21 @@ class TaskNotificationService {
         read: false
       };
       
-      notifications.unshift(newNotification);
+      // Check if notification with same ID already exists
+      const existingIndex = notifications.findIndex(n => n.id === newNotification.id);
+      if (existingIndex === -1) {
+        notifications.unshift(newNotification);
+      } else {
+        // Update existing notification instead of adding duplicate
+        notifications[existingIndex] = newNotification;
+      }
       
       // Keep only last 50 notifications
       const trimmed = notifications.slice(0, 50);
       
       await AsyncStorage.setItem('stored_notifications', JSON.stringify(trimmed));
     } catch (error) {
-      console.error('Error storing notification:', error);
+      // Silently handle error - notification storage is not critical
     }
   }
 
@@ -198,9 +186,40 @@ class TaskNotificationService {
   async getStoredNotifications() {
     try {
       const stored = await AsyncStorage.getItem('stored_notifications');
-      return stored ? JSON.parse(stored) : [];
+      const notifications = stored ? JSON.parse(stored) : [];
+      
+      // Clean up any duplicate IDs by ensuring uniqueness
+      const uniqueNotifications = [];
+      const seenIds = new Set();
+      
+      for (const notification of notifications) {
+        // Migrate legacy or bad IDs: ensure string and not empty
+        if (!notification.id || typeof notification.id !== 'string' || notification.id.trim() === '') {
+          notification.id = `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+        // Also rewrite any legacy fixed daily_summary id
+        if (notification.id === 'daily_summary') {
+          notification.id = `daily_summary_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        }
+
+        if (!seenIds.has(notification.id)) {
+          seenIds.add(notification.id);
+          uniqueNotifications.push(notification);
+        } else {
+          // Generate a new unique ID for duplicate
+          const newId = `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          notification.id = newId;
+          uniqueNotifications.push(notification);
+        }
+      }
+      
+      // Save cleaned notifications back to storage if we found duplicates
+      if (uniqueNotifications.length !== notifications.length) {
+        await AsyncStorage.setItem('stored_notifications', JSON.stringify(uniqueNotifications));
+      }
+      
+      return uniqueNotifications;
     } catch (error) {
-      console.error('Error getting notifications:', error);
       return [];
     }
   }
@@ -217,7 +236,7 @@ class TaskNotificationService {
       
       await AsyncStorage.setItem('stored_notifications', JSON.stringify(updated));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      // Silently handle error
     }
   }
 
@@ -243,7 +262,6 @@ class TaskNotificationService {
 
       return { success: true, id: scheduledId };
     } catch (error) {
-      console.error('Error scheduling reminder:', error);
       return { success: false, error: error.message };
     }
   }
@@ -263,7 +281,6 @@ class TaskNotificationService {
       });
       return { success: true };
     } catch (error) {
-      console.error('Error snoozing notification:', error);
       return { success: false, error: error.message };
     }
   }
@@ -295,7 +312,6 @@ class TaskNotificationService {
         identifier: `task_due_${task.id}`,
       });
 
-      console.log(`📅 Scheduled due notification for task: ${task.title}`);
 
       // Also store an upcoming reminder entry for the notifications page
       const upcomingLocal = {
@@ -353,7 +369,6 @@ class TaskNotificationService {
       identifier: `task_completed_${task.id}`,
     });
 
-    console.log(`✅ Sent completion notification for: ${task.title}`);
   }
 
   async sendDailyTaskSummary() {
@@ -401,7 +416,7 @@ class TaskNotificationService {
         });
       }
     } catch (error) {
-      console.error('Error sending daily summary:', error);
+      // Silently handle error
     }
   }
 
@@ -409,13 +424,12 @@ class TaskNotificationService {
   async cancelTaskNotifications(taskId) {
     await Notifications.cancelScheduledNotificationAsync(`task_due_${taskId}`);
     await Notifications.cancelScheduledNotificationAsync(`task_due_now_${taskId}`);
-    console.log(`🗑️ Cancelled notifications for task: ${taskId}`);
   }
 
   // Schedule daily summary (call this when user opens app)
   async scheduleDailySummary() {
     // Cancel existing daily summary
-    await Notifications.cancelScheduledNotificationAsync('daily_summary');
+    await this.cancelDailySummaries();
 
     // Schedule for 8 PM today
     const now = new Date();
@@ -438,21 +452,44 @@ class TaskNotificationService {
         date: summaryTime,
         repeats: true,
       },
-      identifier: 'daily_summary',
+      identifier: `daily_summary_${Date.now()}`,
     });
+  }
+
+  // Cancel all scheduled daily summary notifications
+  async cancelDailySummaries() {
+    try {
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      const dailySummaryNotifications = scheduledNotifications.filter(
+        (notif) => notif.identifier && notif.identifier.startsWith('daily_summary')
+      );
+      for (const notification of dailySummaryNotifications) {
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      }
+    } catch (error) {
+      // Silently handle error
+    }
   }
 
   // Navigation helpers (you'll need to implement these based on your navigation structure)
   navigateToTask(taskId) {
     // This should navigate to the specific task
-    console.log(`Navigate to task: ${taskId}`);
     // Example: navigation.navigate('TaskDetails', { taskId });
   }
 
   navigateToCompletedTasks() {
     // This should navigate to completed tasks view
-    console.log('Navigate to completed tasks');
     // Example: navigation.navigate('CompletedTasks');
+  }
+
+  // Force clean all notifications (useful for debugging)
+  async forceCleanNotifications() {
+    try {
+      await AsyncStorage.removeItem('stored_notifications');
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    } catch (error) {
+      // Silently handle error
+    }
   }
 }
 
@@ -471,5 +508,6 @@ export const {
   scheduleDailySummary,
   getStoredNotifications,
   markNotificationAsRead,
+  forceCleanNotifications,
   cleanup
 } = taskNotificationService;

@@ -1,26 +1,26 @@
 // screens/NotificationsScreen.js
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  RefreshControl,
-  Alert,
-  StatusBar
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { taskNotificationService } from '../../services/notificationService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
 import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import {
+    Alert,
+    FlatList,
+    RefreshControl,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { ThemeContext } from '../../context/ThemeContext';
+import { forceCleanNotifications, taskNotificationService } from '../../services/notificationService';
 
 const NotificationsScreen = ({ navigation }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const { colors } = React.useContext(ThemeContext);
 
   const loadNotifications = async () => {
     try {
@@ -28,7 +28,7 @@ const NotificationsScreen = ({ navigation }) => {
       const storedNotifications = await taskNotificationService.getStoredNotifications();
       setNotifications(storedNotifications);
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      // Silently handle error
     } finally {
       setLoading(false);
     }
@@ -81,13 +81,17 @@ const NotificationsScreen = ({ navigation }) => {
           text: 'Clear All',
           style: 'destructive',
           onPress: async () => {
-            await AsyncStorage.removeItem('stored_notifications');
+            await forceCleanNotifications();
             setNotifications([]);
-            try { await Notifications.cancelAllScheduledNotificationsAsync(); } catch {}
           }
         }
       ]
     );
+  };
+
+  const debugClearNotifications = async () => {
+    await forceCleanNotifications();
+    await loadNotifications();
   };
 
   const formatType = (type) => {
@@ -133,6 +137,7 @@ const NotificationsScreen = ({ navigation }) => {
       <TouchableOpacity
         style={[
           styles.notificationItem,
+          { backgroundColor: colors.surface, borderLeftColor: colors.primary },
           !item.read && styles.unreadNotification
         ]}
         onPress={() => handleNotificationPress(item)}
@@ -145,25 +150,26 @@ const NotificationsScreen = ({ navigation }) => {
               size={24} 
               color={icon.color} 
             />
-            {!item.read && <View style={styles.unreadDot} />}
+            {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
           </View>
           
           <View style={styles.textContainer}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
               <Text style={[
                 styles.notificationTitle,
+                { color: colors.text },
                 !item.read && styles.unreadText
               ]}>
                 {item.title}
               </Text>
-              <View style={styles.typeChip}>
-                <Text style={styles.typeChipText}>{formatType(item.data?.type)}</Text>
+              <View style={[styles.typeChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.typeChipText, { color: colors.primary }]}>{formatType(item.data?.type)}</Text>
               </View>
             </View>
-            <Text style={styles.notificationBody} numberOfLines={2}>
+            <Text style={[styles.notificationBody, { color: colors.muted }]} numberOfLines={2}>
               {item.body}
             </Text>
-            <Text style={styles.timestamp}>
+            <Text style={[styles.timestamp, { color: colors.muted }]}>
               {formatTime(item.timestamp)}
             </Text>
           </View>
@@ -177,13 +183,13 @@ const NotificationsScreen = ({ navigation }) => {
               }}
               style={{ paddingHorizontal: 8, paddingVertical: 4, marginRight: 6 }}
             >
-              <Ionicons name="time-outline" size={20} color="#7F8C8D" />
+              <Ionicons name="time-outline" size={20} color={colors.muted} />
             </TouchableOpacity>
           )}
           <Ionicons 
             name="chevron-forward-outline" 
             size={20} 
-            color="#BDC3C7" 
+            color={colors.muted} 
           />
         </View>
       </TouchableOpacity>
@@ -192,9 +198,9 @@ const NotificationsScreen = ({ navigation }) => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="notifications-outline" size={64} color="#BDC3C7" />
-      <Text style={styles.emptyTitle}>No Notifications</Text>
-      <Text style={styles.emptyText}>
+      <Ionicons name="notifications-outline" size={64} color={colors.muted} />
+      <Text style={[styles.emptyTitle, { color: colors.muted }]}>No Notifications</Text>
+      <Text style={[styles.emptyText, { color: colors.muted }]}>
         You'll see task reminders and updates here
       </Text>
     </View>
@@ -203,20 +209,20 @@ const NotificationsScreen = ({ navigation }) => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notifications</Text>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {notifications.length > 0 && (
             <TouchableOpacity 
               onPress={() => setShowUnreadOnly((v) => !v)}
-              style={[styles.filterButton, showUnreadOnly && styles.filterButtonActive]}
+              style={[styles.filterButton, { backgroundColor: colors.surface, borderColor: colors.border }, showUnreadOnly && styles.filterButtonActive]}
             >
-              <Ionicons name={showUnreadOnly ? 'mail-unread' : 'mail-open-outline'} size={18} color={showUnreadOnly ? '#1976D2' : '#7F8C8D'} />
-              <Text style={[styles.filterButtonText, showUnreadOnly && styles.filterButtonTextActive]}>
+              <Ionicons name={showUnreadOnly ? 'mail-unread' : 'mail-open-outline'} size={18} color={showUnreadOnly ? colors.primary : colors.muted} />
+              <Text style={[styles.filterButtonText, { color: colors.muted }, showUnreadOnly && styles.filterButtonTextActive]}>
                 {showUnreadOnly ? 'Unread' : 'All'}
               </Text>
             </TouchableOpacity>
@@ -226,16 +232,22 @@ const NotificationsScreen = ({ navigation }) => {
               onPress={clearAllNotifications}
               style={styles.clearButton}
             >
-              <Text style={styles.clearButtonText}>Clear All</Text>
+              <Text style={[styles.clearButtonText, { color: colors.primary }]}>Clear All</Text>
             </TouchableOpacity>
           )}
+          <TouchableOpacity 
+            onPress={debugClearNotifications}
+            style={[styles.clearButton, { marginLeft: 8 }]}
+          >
+            <Text style={[styles.clearButtonText, { color: colors.accent }]}>Debug Clear</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Unread count */}
       {unreadCount > 0 && (
-        <View style={styles.unreadBanner}>
-          <Text style={styles.unreadBannerText}>
+        <View style={[styles.unreadBanner, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <Text style={[styles.unreadBannerText, { color: colors.primary }]}>
             {unreadCount} unread notification{unreadCount > 1 ? 's' : ''}
           </Text>
         </View>
@@ -245,12 +257,14 @@ const NotificationsScreen = ({ navigation }) => {
       <FlatList
         data={showUnreadOnly ? notifications.filter((n) => !n.read) : notifications}
         renderItem={renderNotification}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => {
+          return item.id || `notif_${index}_${Date.now()}`;
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#2196F3']}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={renderEmptyState}
@@ -264,7 +278,6 @@ const NotificationsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -272,38 +285,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 30,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2C3E50',
   },
   clearButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   clearButtonText: {
-    color: '#FF6B6B',
     fontSize: 16,
     fontWeight: '600',
   },
   unreadBanner: {
-    backgroundColor: '#E3F2FD',
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
   },
   unreadBannerText: {
-    color: '#1976D2',
     fontSize: 14,
     fontWeight: '500',
   },
   notificationItem: {
-    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginVertical: 4,
     borderRadius: 12,
@@ -318,7 +323,6 @@ const styles = StyleSheet.create({
   },
   unreadNotification: {
     borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
   },
   notificationContent: {
     flex: 1,
@@ -337,7 +341,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF6B6B',
   },
   textContainer: {
     flex: 1,
@@ -345,7 +348,6 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2C3E50',
     marginRight: 8,
   },
   typeChip: {
@@ -353,12 +355,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
-    backgroundColor: '#EEF6FF',
     borderWidth: 1,
-    borderColor: '#D6E9FF',
   },
   typeChipText: {
-    color: '#1976D2',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -367,13 +366,11 @@ const styles = StyleSheet.create({
   },
   notificationBody: {
     fontSize: 14,
-    color: '#7F8C8D',
     lineHeight: 20,
     marginBottom: 6,
   },
   timestamp: {
     fontSize: 12,
-    color: '#BDC3C7',
   },
   emptyContainer: {
     flex: 1,
@@ -387,13 +384,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#7F8C8D',
     marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    color: '#BDC3C7',
     textAlign: 'center',
     lineHeight: 22,
   },

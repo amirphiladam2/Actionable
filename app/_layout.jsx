@@ -1,16 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Stack, useRouter } from "expo-router";
-import { ActivityIndicator, View, StyleSheet } from "react-native";
-import Toast from "react-native-toast-message";
 import * as Notifications from "expo-notifications";
+import { Stack, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import Toast from "react-native-toast-message";
+import { ThemeProvider } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 import { taskNotificationService } from "../services/notificationService";
-import { ThemeProvider } from "../context/ThemeContext";
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -20,6 +21,15 @@ export default function RootLayout() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  // Ensure platform is properly detected
+  useEffect(() => {
+    // Set platform header for development builds
+    if (__DEV__ && Platform.OS) {
+      // This helps with platform detection in development builds
+      global.__PLATFORM__ = Platform.OS;
+    }
+  }, []);
 
   const notificationListener = useRef();
   const responseListener = useRef();
@@ -40,13 +50,10 @@ export default function RootLayout() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔄 Auth state changed:', event, session?.user ? 'user exists' : 'no user');
-      
       setUser(session?.user ?? null);
       
       // Force navigation on sign out
       if (event === 'SIGNED_OUT') {
-        console.log('👋 User signed out, forcing redirect to auth');
         // Use replace to reset the navigation stack
         setTimeout(() => {
           router.replace('/auth/AuthScreen');
@@ -55,7 +62,6 @@ export default function RootLayout() {
       
       // Ensure proper navigation on sign in
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('👤 User signed in, redirecting to screens');
         setTimeout(() => {
           router.replace('/(screens)');
         }, 100);
@@ -67,50 +73,49 @@ export default function RootLayout() {
 
   // 🔹 Notifications setup
   useEffect(() => {
-    console.log("🚀 Setting up notification listeners");
+    // Only set up notification listeners in development builds, not Expo Go
+    if (Platform.OS !== 'web') {
+      notificationListener.current =
+        Notifications.addNotificationReceivedListener((notification) => {
 
-    notificationListener.current =
-      Notifications.addNotificationReceivedListener((notification) => {
-        console.log("📱 Notification received:", notification);
+          Toast.show({
+            type: "info",
+            text1: notification.request.content.title,
+            text2: notification.request.content.body,
+            position: "top",
+          });
 
-        Toast.show({
-          type: "info",
-          text1: notification.request.content.title,
-          text2: notification.request.content.body,
-          position: "top",
+          taskNotificationService.storeNotificationLocally(notification);
+
+          const notificationId =
+            notification.request.content.data?.notificationId;
+          if (notificationId) {
+            markNotificationAsReceived(notificationId);
+          }
         });
+    }
 
-        taskNotificationService.storeNotificationLocally(notification);
+    // Only set up response listeners in development builds, not Expo Go
+    if (Platform.OS !== 'web') {
+      responseListener.current =
+        Notifications.addNotificationResponseReceivedListener((response) => {
+          const notificationData = response.notification.request.content.data;
+          const notificationId = notificationData?.notificationId;
 
-        const notificationId =
-          notification.request.content.data?.notificationId;
-        if (notificationId) {
-          markNotificationAsReceived(notificationId);
-        }
-      });
+          if (notificationId) {
+            markNotificationAsRead(notificationId);
+          }
 
-    responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("👆 Notification tapped:", response);
-        const notificationData = response.notification.request.content.data;
-        const notificationId = notificationData?.notificationId;
-
-        if (notificationId) {
-          markNotificationAsRead(notificationId);
-        }
-
-        handleNotificationNavigation(notificationData);
-      });
+          handleNotificationNavigation(notificationData);
+        });
+    }
 
     return () => {
-      console.log("🧹 Cleaning up notification listeners");
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(
-          notificationListener.current
-        );
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        responseListener.current.remove();
       }
     };
   }, []);
@@ -118,25 +123,21 @@ export default function RootLayout() {
   // 🔹 Handle user-specific notification setup
   useEffect(() => {
     if (!loading && user) {
-      console.log("🔐 User authenticated:", user.email);
-      console.log("📱 Registering for push notifications...");
-
       taskNotificationService
         .registerForPushNotifications()
         .then((token) => {
-          if (token) {
-            console.log("✅ Push notifications registered successfully");
-          } else {
-            console.log("ℹ️ Push notifications not available (likely Expo Go)");
-          }
+          // Push notifications registered
         })
         .catch((error) => {
-          console.error("❌ Failed to register for push notifications:", error);
+          // Silently handle error
         });
 
-      taskNotificationService.scheduleDailySummary().catch((error) => {
-        console.error("❌ Failed to schedule daily summary:", error);
-      });
+      // Only schedule notifications in development builds, not Expo Go
+      if (Platform.OS !== 'web') {
+        taskNotificationService.scheduleDailySummary().catch((error) => {
+          // Silently handle error
+        });
+      }
     }
   }, [user, loading]);
 
@@ -151,9 +152,11 @@ export default function RootLayout() {
         })
         .eq("id", notificationId);
 
-      if (error) console.error("Error marking notification as received:", error);
+      if (error) {
+        // Silently handle error
+      }
     } catch (error) {
-      console.error("Error marking notification as received:", error);
+      // Silently handle error
     }
   };
 
@@ -168,20 +171,20 @@ export default function RootLayout() {
         })
         .eq("id", notificationId);
 
-      if (error) console.error("Error marking notification as read:", error);
+      if (error) {
+        // Silently handle error
+      }
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      // Silently handle error
     }
   };
 
   const handleNotificationNavigation = (data) => {
     if (!data?.type) return;
-    console.log("🧭 Handling notification navigation:", data.type);
     // router.push(...) based on type
   };
 
   if (loading) {
-    console.log("🔄 Showing loading screen");
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0eb6e9ff" />
@@ -189,8 +192,6 @@ export default function RootLayout() {
       </View>
     );
   }
-
-  console.log("📱 Rendering app layout, user:", user ? "authenticated" : "not authenticated");
 
   return (
     <ThemeProvider>

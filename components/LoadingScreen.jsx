@@ -1,24 +1,27 @@
 // components/LoadingScreen.js
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ThemeContext } from '../context/ThemeContext';
 
-export const LoadingScreen = ({ text }) => (
-  <View style={styles.container}>
-    <ActivityIndicator size="large" color="#0ea5e9" />
-    <Text style={styles.loadingText}>{text}</Text>
-  </View>
-);
+export const LoadingScreen = ({ text }) => {
+  const { colors } = React.useContext(ThemeContext);
+  
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={[styles.loadingText, { color: colors.text }]}>{text}</Text>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6b7280',
   },
 });

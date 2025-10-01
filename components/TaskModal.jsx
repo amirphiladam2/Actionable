@@ -1,19 +1,20 @@
 // components/TaskModal/TaskModal.js
-import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Dimensions,
-  Alert,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+    Alert,
+    Dimensions,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { TASK_CATEGORIES, TASK_PRIORITIES } from '../constants/index';
+import { ThemeContext } from '../context/ThemeContext';
 import { styles } from '../styles/taskModalStyles';
 
 const { height } = Dimensions.get('window');
@@ -28,9 +29,11 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
     has_time: false,
   });
 
-  // Custom date/time picker states
+  // Native date/time picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [pickerMode, setPickerMode] = useState('date'); // 'date' or 'time'
+  const { colors } = React.useContext(ThemeContext);
 
   useEffect(() => {
     if (initialTask) {
@@ -99,11 +102,11 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
     onClose();
   };
 
-  const updateField = (field, value) => {
+  const updateField = useCallback((field, value) => {
     setTaskData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const formatDate = (date) => {
+  const formatDate = useCallback((date) => {
     if (!date) return 'Select date';
     
     const today = new Date();
@@ -121,12 +124,12 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
         day: 'numeric' 
       });
     }
-  };
+  }, []);
 
-  const formatTime = (date) => {
+  const formatTime = useCallback((date) => {
     if (!date) return 'No time';
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  }, []);
 
   const getQuickDateOptions = () => {
     const today = new Date();
@@ -143,62 +146,19 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
     tomorrow.setHours(taskData.due_date?.getHours() || 9, taskData.due_date?.getMinutes() || 0, 0, 0);
     options.push({ label: 'Tomorrow', date: tomorrow });
     
-    // This Weekend
-    const weekend = new Date();
-    const daysUntilSaturday = (6 - today.getDay()) % 7;
-    weekend.setDate(today.getDate() + (daysUntilSaturday || 7));
-    weekend.setHours(taskData.due_date?.getHours() || 10, taskData.due_date?.getMinutes() || 0, 0, 0);
-    options.push({ label: 'Weekend', date: weekend });
-    
-    // Next Week
-    const nextWeek = new Date();
-    nextWeek.setDate(today.getDate() + 7);
-    nextWeek.setHours(taskData.due_date?.getHours() || 9, taskData.due_date?.getMinutes() || 0, 0, 0);
-    options.push({ label: 'Next Week', date: nextWeek });
-    
     return options;
   };
 
-  const getTimeOptions = () => {
-    const times = [];
-    // Cover full 24 hours (0-23)
-    for (let hour = 0; hour < 24; hour++) {
-      // Every 15 minutes for more precision
-      for (let minute = 0; minute < 60; minute += 15) {
-        const time = new Date();
-        time.setHours(hour, minute, 0, 0);
-        times.push({
-          label: time.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true // Shows AM/PM
-          }),
-          hour,
-          minute,
-          // Add period indicator for better grouping
-          period: hour < 12 ? 'AM' : 'PM'
-        });
-      }
-    }
-    return times;
-  };
 
-  const handleTimeSelect = (hour, minute) => {
-    const newDate = new Date(taskData.due_date);
-    newDate.setHours(hour, minute, 0, 0);
-    updateField('due_date', newDate);
-    updateField('has_time', true);
-    setShowTimePicker(false);
-  };
-
-  const renderCustomDatePicker = () => {
+  const renderDatePicker = () => {
     if (!showDatePicker) return null;
 
     const today = new Date();
-    const dates = [];
+    const currentDate = taskData.due_date || today;
     
-    // Generate next 30 days
-    for (let i = 0; i < 30; i++) {
+    // Generate next 14 days for better UX
+    const dates = [];
+    for (let i = 0; i < 14; i++) {
       const date = new Date();
       date.setDate(today.getDate() + i);
       dates.push(date);
@@ -207,163 +167,201 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
     return (
       <Modal
         visible={showDatePicker}
-        transparent={true}
-        animationType="fade"
+        transparent
+        animationType="slide"
         onRequestClose={() => setShowDatePicker(false)}
       >
-        <View style={styles.pickerOverlay}>
-          <View style={styles.pickerContent}>
-            <View style={styles.pickerHeader}>
+        <View style={[styles.pickerOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.pickerModal, { backgroundColor: colors.surface }]}>
+            <View style={[styles.pickerHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                <Text style={styles.pickerCancel}>Cancel</Text>
+                <Text style={[styles.pickerButton, { color: colors.primary }]}>Cancel</Text>
               </TouchableOpacity>
-              <Text style={styles.pickerTitle}>Select Date</Text>
-              <View style={{ width: 60 }} />
+              <Text style={[styles.pickerTitle, { color: colors.text }]}>Select Date</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Text style={[styles.pickerButton, { color: colors.primary }]}>Done</Text>
+              </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.pickerScroll}>
-              {dates.map((date, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.pickerItem,
-                    taskData.due_date?.toDateString() === date.toDateString() && 
-                    styles.pickerItemSelected
-                  ]}
-                  onPress={() => {
-                    const newDate = new Date(taskData.due_date || new Date());
-                    newDate.setFullYear(date.getFullYear());
-                    newDate.setMonth(date.getMonth());
-                    newDate.setDate(date.getDate());
-                    updateField('due_date', newDate);
-                    setShowDatePicker(false);
-                  }}
-                >
-                  <Text style={[
-                    styles.pickerItemText,
-                    taskData.due_date?.toDateString() === date.toDateString() && 
-                    styles.pickerItemTextSelected
-                  ]}>
-                    {formatDate(date)} - {date.toLocaleDateString([], { 
-                      month: 'long', 
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <View style={styles.dateGrid}>
+              {dates.map((date, index) => {
+                const isSelected = currentDate.toDateString() === date.toDateString();
+                const isToday = date.toDateString() === today.toDateString();
+                const isTomorrow = date.toDateString() === new Date(today.getTime() + 24 * 60 * 60 * 1000).toDateString();
+                
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.dateItem,
+                      { 
+                        backgroundColor: isSelected ? colors.primary : colors.background,
+                        borderColor: isSelected ? colors.primary : colors.border,
+                      }
+                    ]}
+                    onPress={() => {
+                      const newDate = new Date(date);
+                      if (taskData.due_date && taskData.has_time) {
+                        newDate.setHours(taskData.due_date.getHours());
+                        newDate.setMinutes(taskData.due_date.getMinutes());
+                      }
+                      updateField('due_date', newDate);
+                      setShowDatePicker(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.dateDay,
+                      { color: isSelected ? '#fff' : colors.text }
+                    ]}>
+                      {date.getDate()}
+                    </Text>
+                    <Text style={[
+                      styles.dateWeekday,
+                      { color: isSelected ? '#fff' : colors.muted }
+                    ]}>
+                      {date.toLocaleDateString('en', { weekday: 'short' })}
+                    </Text>
+                    {(isToday || isTomorrow) && (
+                      <Text style={[
+                        styles.dateLabel,
+                        { color: isSelected ? '#fff' : colors.primary }
+                      ]}>
+                        {isToday ? 'Today' : 'Tomorrow'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         </View>
       </Modal>
     );
   };
 
-  const renderCustomTimePicker = () => {
+  const renderTimePicker = () => {
     if (!showTimePicker) return null;
 
-    const times = getTimeOptions();
-    
-    // Group times by period for better organization
-    const groupedTimes = times.reduce((acc, time) => {
-      const period = time.period;
-      if (!acc[period]) acc[period] = [];
-      acc[period].push(time);
-      return acc;
-    }, {});
+    const currentTime = taskData.due_date || new Date();
+    const popularTimes = [
+      { hour: 9, minute: 0, label: '9:00 AM' },
+      { hour: 12, minute: 0, label: '12:00 PM' },
+      { hour: 14, minute: 0, label: '2:00 PM' },
+      { hour: 17, minute: 0, label: '5:00 PM' },
+      { hour: 19, minute: 0, label: '7:00 PM' },
+    ];
 
     return (
       <Modal
         visible={showTimePicker}
-        transparent={true}
-        animationType="fade"
+        transparent
+        animationType="slide"
         onRequestClose={() => setShowTimePicker(false)}
       >
-        <View style={styles.pickerOverlay}>
-          <View style={styles.pickerContent}>
-            <View style={styles.pickerHeader}>
+        <View style={[styles.pickerOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.pickerModal, { backgroundColor: colors.surface }]}>
+            <View style={[styles.pickerHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                <Text style={styles.pickerCancel}>Cancel</Text>
+                <Text style={[styles.pickerButton, { color: colors.primary }]}>Cancel</Text>
               </TouchableOpacity>
-              <Text style={styles.pickerTitle}>Select Time</Text>
-              <TouchableOpacity onPress={() => {
-                updateField('has_time', false);
-                setShowTimePicker(false);
-              }}>
-                <Text style={styles.pickerClear}>No Time</Text>
+              <Text style={[styles.pickerTitle, { color: colors.text }]}>Select Time</Text>
+              <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                <Text style={[styles.pickerButton, { color: colors.primary }]}>Done</Text>
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
-              {/* Popular Times Section */}
+            <ScrollView style={styles.timePickerContent} showsVerticalScrollIndicator={false}>
               <View style={styles.popularTimesSection}>
-                <Text style={styles.sectionHeader}>Popular Times</Text>
-                {[
-                  { hour: 9, minute: 0, label: '9:00 AM' },
-                  { hour: 12, minute: 0, label: '12:00 PM' },
-                  { hour: 14, minute: 0, label: '2:00 PM' },
-                  { hour: 17, minute: 0, label: '5:00 PM' },
-                  { hour: 19, minute: 0, label: '7:00 PM' },
-                ].map((time, index) => (
-                  <TouchableOpacity
-                    key={`popular-${index}`}
-                    style={[
-                      styles.popularTimeItem,
-                      taskData.has_time && 
-                      taskData.due_date?.getHours() === time.hour &&
-                      taskData.due_date?.getMinutes() === time.minute && 
-                      styles.pickerItemSelected
-                    ]}
-                    onPress={() => handleTimeSelect(time.hour, time.minute)}
-                  >
-                    <Text style={[
-                      styles.popularTimeText,
-                      taskData.has_time && 
-                      taskData.due_date?.getHours() === time.hour &&
-                      taskData.due_date?.getMinutes() === time.minute && 
-                      styles.pickerItemTextSelected
-                    ]}>
-                      {time.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Times</Text>
+                <View style={styles.popularTimesGrid}>
+                  {popularTimes.map((time, index) => {
+                    const isSelected = taskData.has_time && 
+                      currentTime.getHours() === time.hour && 
+                      currentTime.getMinutes() === time.minute;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.popularTimeItem,
+                          { 
+                            backgroundColor: isSelected ? colors.primary : colors.background,
+                            borderColor: isSelected ? colors.primary : colors.border,
+                          }
+                        ]}
+                        onPress={() => {
+                          const newDate = new Date(taskData.due_date || new Date());
+                          newDate.setHours(time.hour, time.minute, 0, 0);
+                          updateField('due_date', newDate);
+                          updateField('has_time', true);
+                          setShowTimePicker(false);
+                        }}
+                      >
+                        <Text style={[
+                          styles.popularTimeText,
+                          { color: isSelected ? '#fff' : colors.text }
+                        ]}>
+                          {time.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
 
-              {/* All Times - Grouped by AM/PM */}
-              {Object.entries(groupedTimes).map(([period, periodTimes]) => (
-                <View key={period}>
-                  <Text style={styles.sectionHeader}>{period}</Text>
-                  {periodTimes.map((time, index) => (
-                    <TouchableOpacity
-                      key={`${period}-${index}`}
-                      style={[
-                        styles.pickerItem,
-                        taskData.has_time && 
-                        taskData.due_date?.getHours() === time.hour &&
-                        taskData.due_date?.getMinutes() === time.minute && 
-                        styles.pickerItemSelected
-                      ]}
-                      onPress={() => handleTimeSelect(time.hour, time.minute)}
-                    >
-                      <Text style={[
-                        styles.pickerItemText,
-                        taskData.has_time && 
-                        taskData.due_date?.getHours() === time.hour &&
-                        taskData.due_date?.getMinutes() === time.minute && 
-                        styles.pickerItemTextSelected
-                      ]}>
-                        {time.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+              <View style={styles.allTimesSection}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>All Times</Text>
+                <View style={styles.timeGrid}>
+                  {Array.from({ length: 24 }, (_, hour) => 
+                    Array.from({ length: 4 }, (_, minuteIndex) => {
+                      const minute = minuteIndex * 15;
+                      const time = new Date();
+                      time.setHours(hour, minute, 0, 0);
+                      const isSelected = taskData.has_time && 
+                        currentTime.getHours() === hour && 
+                        currentTime.getMinutes() === minute;
+                      
+                      return (
+                        <TouchableOpacity
+                          key={`${hour}-${minute}`}
+                          style={[
+                            styles.timeItem,
+                            { 
+                              backgroundColor: isSelected ? colors.primary : colors.background,
+                              borderColor: isSelected ? colors.primary : colors.border,
+                            }
+                          ]}
+                          onPress={() => {
+                            const newDate = new Date(taskData.due_date || new Date());
+                            newDate.setHours(hour, minute, 0, 0);
+                            updateField('due_date', newDate);
+                            updateField('has_time', true);
+                            setShowTimePicker(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.timeText,
+                            { color: isSelected ? '#fff' : colors.text }
+                          ]}>
+                            {time.toLocaleTimeString([], { 
+                              hour: '2-digit', 
+                              minute: '2-digit',
+                              hour12: true 
+                            })}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })
+                  )}
                 </View>
-              ))}
+              </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
     );
   };
+
 
   const isFormValid = taskData.title.trim().length > 0 && taskData.due_date;
 
@@ -379,14 +377,14 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+          <View style={[styles.modalOverlay, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
               {/* Modal Header */}
-              <View style={styles.modalHeader}>
+              <View style={[styles.modalHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={handleClose}>
-                  <Text style={styles.cancelButton}>Cancel</Text>
+                  <Text style={[styles.cancelButton, { color: colors.primary }]}>Cancel</Text>
                 </TouchableOpacity>
-                <Text style={styles.modalTitle}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
                   {initialTask ? 'Edit Task' : 'New Task'}
                 </Text>
                 <TouchableOpacity 
@@ -395,6 +393,7 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                 >
                   <Text style={[
                     styles.saveButton, 
+                    { color: colors.primary },
                     !isFormValid && styles.saveButtonDisabled
                   ]}>
                     Save
@@ -406,23 +405,23 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                 {/* Task Title */}
                 <View style={styles.titleSection}>
                   <TextInput
-                    style={styles.titleInput}
+                    style={[styles.titleInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
                     placeholder="What needs to be done?"
-                    placeholderTextColor="#A0A0A0"
+                    placeholderTextColor={colors.muted}
                     value={taskData.title}
                     onChangeText={(text) => updateField('title', text)}
                     multiline
                     autoFocus
                     maxLength={200}
                   />
-                  <Text style={styles.characterCount}>
+                  <Text style={[styles.characterCount, { color: colors.muted }]}>
                     {taskData.title.length}/200
                   </Text>
                 </View>
 
                 {/* Due Date & Time Section */}
                 <View style={styles.dateTimeSection}>
-                  <Text style={styles.optionLabel}>Due Date & Time</Text>
+                  <Text style={[styles.optionLabel, { color: colors.text }]}>Due Date & Time</Text>
                   
                   {/* Quick Date Options */}
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -432,6 +431,7 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                           key={index}
                           style={[
                             styles.quickDateOption,
+                            { backgroundColor: colors.surface, borderColor: colors.border },
                             taskData.due_date?.toDateString() === option.date.toDateString() && 
                             styles.quickDateOptionSelected
                           ]}
@@ -439,6 +439,7 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                         >
                           <Text style={[
                             styles.quickDateOptionText,
+                            { color: colors.text },
                             taskData.due_date?.toDateString() === option.date.toDateString() && 
                             styles.quickDateOptionTextSelected
                           ]}>
@@ -452,21 +453,21 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                   {/* Date and Time Buttons */}
                   <View style={styles.dateTimeRow}>
                     <TouchableOpacity 
-                      style={styles.dateTimeButton}
+                      style={[styles.dateTimeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                       onPress={() => setShowDatePicker(true)}
                     >
-                      <Ionicons name="calendar-outline" size={20} color="#4A90E2" />
-                      <Text style={styles.dateTimeButtonText}>
+                      <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                      <Text style={[styles.dateTimeButtonText, { color: colors.text }]}>
                         {formatDate(taskData.due_date)}
                       </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={styles.dateTimeButton}
+                      style={[styles.dateTimeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                       onPress={() => setShowTimePicker(true)}
                     >
-                      <Ionicons name="time-outline" size={20} color="#4A90E2" />
-                      <Text style={styles.dateTimeButtonText}>
+                      <Ionicons name="time-outline" size={20} color={colors.primary} />
+                      <Text style={[styles.dateTimeButtonText, { color: colors.text }]}>
                         {taskData.has_time ? formatTime(taskData.due_date) : 'Add time'}
                       </Text>
                     </TouchableOpacity>
@@ -478,22 +479,22 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                       style={styles.clearTimeButton}
                       onPress={() => updateField('has_time', false)}
                     >
-                      <Text style={styles.clearTimeText}>Remove time</Text>
+                      <Text style={[styles.clearTimeText, { color: colors.primary }]}>Remove time</Text>
                     </TouchableOpacity>
                   )}
                 </View>
 
                 {/* Priority Selection */}
                 <View style={styles.prioritySection}>
-                  <Text style={styles.optionLabel}>Priority</Text>
+                  <Text style={[styles.optionLabel, { color: colors.text }]}>Priority</Text>
                   <View style={styles.priorityOptions}>
                     {TASK_PRIORITIES.map((priority) => (
                       <TouchableOpacity
                         key={priority.id}
                         style={[
                           styles.priorityOption,
-                          taskData.priority === priority.id && styles.priorityOptionSelected,
-                          { borderColor: priority.color }
+                          { backgroundColor: colors.surface, borderColor: priority.color },
+                          taskData.priority === priority.id && styles.priorityOptionSelected
                         ]}
                         onPress={() => updateField('priority', priority.id)}
                       >
@@ -503,6 +504,7 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                         ]} />
                         <Text style={[
                           styles.priorityOptionText,
+                          { color: colors.text },
                           taskData.priority === priority.id && styles.priorityOptionTextSelected
                         ]}>
                           {priority.name}
@@ -514,7 +516,7 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
 
                 {/* Category Selection */}
                 <View style={styles.categorySection}>
-                  <Text style={styles.optionLabel}>Category</Text>
+                  <Text style={[styles.optionLabel, { color: colors.text }]}>Category</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={styles.categoryOptions}>
                       {TASK_CATEGORIES.map((category) => (
@@ -522,8 +524,8 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                           key={category.id}
                           style={[
                             styles.categoryOption,
-                            taskData.category === category.id && styles.categoryOptionSelected,
-                            { borderColor: category.color }
+                            { backgroundColor: colors.surface, borderColor: category.color },
+                            taskData.category === category.id && styles.categoryOptionSelected
                           ]}
                           onPress={() => updateField('category', category.id)}
                         >
@@ -534,6 +536,7 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
                           />
                           <Text style={[
                             styles.categoryOptionText,
+                            { color: colors.text },
                             taskData.category === category.id && styles.categoryOptionTextSelected
                           ]}>
                             {category.name}
@@ -546,18 +549,18 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
 
                 {/* Description */}
                 <View style={styles.descriptionSection}>
-                  <Text style={styles.optionLabel}>Notes</Text>
+                  <Text style={[styles.optionLabel, { color: colors.text }]}>Notes</Text>
                   <TextInput
-                    style={styles.descriptionInput}
+                    style={[styles.descriptionInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
                     placeholder="Add any additional notes..."
-                    placeholderTextColor="#A0A0A0"
+                    placeholderTextColor={colors.muted}
                     value={taskData.description}
                     onChangeText={(text) => updateField('description', text)}
                     multiline
                     numberOfLines={4}
                     maxLength={500}
                   />
-                  <Text style={styles.characterCount}>
+                  <Text style={[styles.characterCount, { color: colors.muted }]}>
                     {taskData.description.length}/500
                   </Text>
                 </View>
@@ -571,10 +574,10 @@ const TaskModal = ({ visible, onClose, onSave, initialTask = null }) => {
       </Modal>
 
       {/* Custom Date Picker */}
-      {renderCustomDatePicker()}
+      {renderDatePicker()}
 
       {/* Custom Time Picker */}
-      {renderCustomTimePicker()}
+      {renderTimePicker()}
     </>
   );
 };

@@ -1,31 +1,30 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image,
-  TouchableOpacity, 
-  Alert,
-  ActivityIndicator,
-  ScrollView
-} from "react-native";
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
-import ReactNative from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
 import { ThemeContext } from '../context/ThemeContext';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 
 // Memoized DrawerItem component
-const DrawerItem = React.memo(({ icon, label, onPress, color = "#111827", disabled = false }) => (
+const DrawerItem = React.memo(({ icon, label, onPress, disabled = false, colors }) => (
   <TouchableOpacity 
-    style={[styles.navCard, disabled && styles.disabledCard]} 
+    style={[styles.navCard, { backgroundColor: colors.surface }, disabled && styles.disabledCard]} 
     onPress={onPress}
     disabled={disabled}
     activeOpacity={0.7}
   >
-    <Ionicons name={icon} size={20} color={disabled ? "#9ca3af" : color} style={styles.icon} />
-    <Text style={[styles.navText, { color: disabled ? "#9ca3af" : color }]}>
+    <Ionicons name={icon} size={20} color={disabled ? colors.muted : colors.text} style={styles.icon} />
+    <Text style={[styles.navText, { color: disabled ? colors.muted : colors.text }]}>
       {label}
     </Text>
   </TouchableOpacity>
@@ -54,7 +53,6 @@ export default function CustomDrawer() {
             filter: `id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Profile updated via real-time:', payload.new);
             setUserProfile(payload.new);
           }
         )
@@ -62,7 +60,6 @@ export default function CustomDrawer() {
 
       // Cleanup subscription
       return () => {
-        console.log('Cleaning up profile subscription');
         supabase.removeChannel(subscription);
       };
     }
@@ -85,7 +82,6 @@ export default function CustomDrawer() {
       }
 
       if (!data) {
-        console.log('No profile found, creating one...');
         await createUserProfile();
       } else {
         setUserProfile(data);
@@ -112,7 +108,6 @@ export default function CustomDrawer() {
           filter: `id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Profile updated in real-time:', payload.new);
           setUserProfile(payload.new);
         }
       )
@@ -147,7 +142,6 @@ export default function CustomDrawer() {
       }
 
       setUserProfile(data);
-      console.log('Profile created successfully');
     } catch (error) {
       console.error('Error creating profile:', error);
     }
@@ -182,7 +176,6 @@ export default function CustomDrawer() {
             const { error } = await supabase.auth.signOut();
             if (error) throw error;
             
-            console.log('✅ Logout successful - layout should handle redirect');
             // Let the layout handle the redirect automatically
             // The layout will detect user becomes null and show (auth) screen
             
@@ -268,9 +261,9 @@ export default function CustomDrawer() {
   // Show loading state while fetching profile
   if (loading && !userProfile) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#0ea5e9" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading profile...</Text>
       </View>
     );
   }
@@ -292,7 +285,7 @@ export default function CustomDrawer() {
               key={displayInfo.avatarUri}
             />
           ) : (
-            <View style={[styles.avatar, styles.defaultAvatar]}> 
+            <View style={[styles.avatar, styles.defaultAvatar, { backgroundColor: colors.primary }]}> 
               <Text style={styles.avatarText}>
                 {displayInfo.displayName.charAt(0).toUpperCase()}
               </Text>
@@ -316,24 +309,28 @@ export default function CustomDrawer() {
             label="Home" 
             onPress={() => handleNavigation('/home')}
             disabled={loading}
+            colors={colors}
           />
           <DrawerItem 
             icon="person-outline" 
             label="Profile" 
             onPress={() => handleNavigation('/profile')}
             disabled={loading}
+            colors={colors}
           />
           <DrawerItem 
             icon="settings-outline" 
             label="Settings" 
             onPress={() => handleNavigation('/settings')}
             disabled={loading}
+            colors={colors}
           />
           <DrawerItem 
             icon="help-circle-outline" 
             label="Help & Support" 
             onPress={() => handleNavigation('/support')}
             disabled={loading}
+            colors={colors}
           />
         </View>
         
@@ -346,7 +343,6 @@ export default function CustomDrawer() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   content: {
     paddingTop: 48,
@@ -361,7 +357,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6b7280',
   },
   profileCard: {
     flexDirection: 'row',
@@ -378,7 +373,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   defaultAvatar: {
-    backgroundColor: '#0ea5e9',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -393,11 +387,9 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
   },
   email: {
     fontSize: 14,
-    color: '#6b7280',
   },
   navigationSection: {
     marginBottom: 20,
@@ -408,7 +400,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: '#f9fafb',
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
@@ -420,7 +411,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   disabledCard: {
-    backgroundColor: '#f3f4f6',
+    opacity: 0.5,
   },
   icon: {
     marginRight: 12,
@@ -432,6 +423,5 @@ const styles = StyleSheet.create({
   dangerZone: {
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
   },
 });

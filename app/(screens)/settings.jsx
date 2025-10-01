@@ -1,293 +1,455 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, StatusBar, Alert } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as Notifications from 'expo-notifications'
-import { authService } from '../../services/authService'
-import { ThemeContext } from '../../context/ThemeContext'
-import { taskNotificationService } from '../../services/notificationService'
+// screens/Settings/Settings.js
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ThemeContext } from '../../context/ThemeContext';
+import { taskNotificationService } from '../../services/notificationService';
 
-export default function SettingsScreen() {
+export default function Settings() {
+  const { colors, isDarkMode, toggleTheme } = React.useContext(ThemeContext);
   const router = useRouter();
-  const [dailySummaryEnabled, setDailySummaryEnabled] = useState(false);
-  const [pushToken, setPushToken] = useState(null);
-  const { theme, colors, toggleTheme } = React.useContext(ThemeContext);
+  const [dailySummariesEnabled, setDailySummariesEnabled] = useState(true);
+  const [localIsDarkMode, setLocalIsDarkMode] = useState(isDarkMode);
+  
+  // Update local state when context changes
+  React.useEffect(() => {
+    setLocalIsDarkMode(isDarkMode);
+  }, [isDarkMode]);
+  
+  // Simple state-based positioning - no complex animation
+  const themeToggleLeft = localIsDarkMode ? 20 : 2;
+  const notificationToggleLeft = dailySummariesEnabled ? 20 : 2;
 
-  useEffect(() => {
-    const load = async () => {
-      const stored = await AsyncStorage.getItem('daily_summary_enabled');
-      setDailySummaryEnabled(stored === 'true');
-      const token = await AsyncStorage.getItem('push_token');
-      setPushToken(token);
-    };
-    load();
-  }, []);
+  const handleToggleTheme = useCallback(() => {
+    // Update local state immediately for instant visual feedback
+    setLocalIsDarkMode(!localIsDarkMode);
+    // Then toggle the theme context
+    toggleTheme();
+  }, [toggleTheme, localIsDarkMode]);
 
-  const toggleDailySummary = useCallback(async () => {
-    const next = !dailySummaryEnabled;
-    setDailySummaryEnabled(next);
-    await AsyncStorage.setItem('daily_summary_enabled', next ? 'true' : 'false');
+  const handleToggleDailySummaries = useCallback(async () => {
     try {
-      if (next) {
-        await taskNotificationService.scheduleDailySummary();
+      if (dailySummariesEnabled) {
+        // Disable daily summaries
+        await taskNotificationService.cancelDailySummaries();
+        setDailySummariesEnabled(false);
+        Alert.alert('Success', 'Daily summaries have been disabled');
       } else {
-        try { await Notifications.cancelScheduledNotificationAsync('daily_summary'); } catch {}
+        // Enable daily summaries
+        await taskNotificationService.scheduleDailySummary();
+        setDailySummariesEnabled(true);
+        Alert.alert('Success', 'Daily summaries have been enabled');
       }
-    } catch (e) {
-      Alert.alert('Error', 'Could not update daily summary schedule');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update daily summaries setting');
     }
-  }, [dailySummaryEnabled]);
+  }, [dailySummariesEnabled]);
 
-  const handleRegisterPush = useCallback(async () => {
-    const token = await taskNotificationService.registerForPushNotifications();
-    if (token) {
-      setPushToken(token);
-      Alert.alert('Push Enabled', 'Device registered for push notifications');
-    } else {
-      Alert.alert(
-        'Push Notifications', 
-        'Push notifications require a development build or production app.\n\nIn Expo Go, only local notifications work for scheduled reminders.'
-      );
-    }
-  }, []);
+  const handlePrivacyPress = useCallback(() => {
+    router.push('/(screens)/privacy');
+  }, [router]);
 
-  const handleClearLocalNotifications = useCallback(async () => {
-    await AsyncStorage.removeItem('stored_notifications');
-    try { await Notifications.cancelAllScheduledNotificationsAsync(); } catch {}
-    Alert.alert('Cleared', 'Local notifications and schedules cleared');
-  }, []);
+  const handleSupportPress = useCallback(() => {
+    router.push('/(screens)/support');
+  }, [router]);
 
-  const handleSignOut = useCallback(async () => {
-    const result = await authService.signOut();
-    if (result.success) {
-      router.replace('/auth/AuthScreen');
-    } else {
-      Alert.alert('Error', result.error?.message || 'Failed to sign out');
-    }
+  const handleLogout = useCallback(async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Import auth service
+              const { signOut } = await import('../../services/authService');
+              await signOut();
+              router.replace('/');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  }, [router]);
+
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert(
+      'Delete Account',
+      'This action cannot be undone. All your data will be permanently deleted. Are you absolutely sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete Account', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Final Confirmation',
+              'Type "DELETE" to confirm account deletion',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Confirm Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      // Import auth service for account deletion
+                      const { deleteAccount } = await import('../../services/authService');
+                      await deleteAccount();
+                      router.replace('/');
+                    } catch (error) {
+                      Alert.alert('Error', 'Failed to delete account. Please contact support.');
+                    }
+                  }
+                }
+              ]
+            );
+          }
+        }
+      ]
+    );
   }, [router]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.muted }]}>Customize your experience</Text>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            Manage your app preferences
+          </Text>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Appearance Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }] }>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(6, 182, 212, 0.1)', borderColor: 'rgba(6, 182, 212, 0.2)' }]}>
-                  <Ionicons name="notifications-outline" size={18} color="#06b6d4" />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+          
+          <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={handleToggleTheme}
+            >
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons 
+                    name={localIsDarkMode ? 'moon' : 'sunny'} 
+                    size={22} 
+                    color={colors.primary} 
+                  />
                 </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: colors.text }]}>Daily Summary</Text>
-                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Get a summary every evening</Text>
-                </View>
-              </View>
-              <Switch value={dailySummaryEnabled} onValueChange={toggleDailySummary} thumbColor={dailySummaryEnabled ? '#06b6d4' : '#f4f3f4'} trackColor={{ false: '#e2e8f0', true: '#bae6fd' }} />
-            </View>
-
-            <TouchableOpacity style={styles.row} onPress={handleRegisterPush}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(6, 182, 212, 0.1)', borderColor: 'rgba(6, 182, 212, 0.2)' }]}>
-                  <Ionicons name="phone-portrait-outline" size={18} color="#06b6d4" />
-                </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: colors.text }]}>Register Device for Push</Text>
-                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>{pushToken ? 'Device registered' : 'Requires dev build or production app'}</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward-outline" size={18} color="#94a3b8" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.row} onPress={handleClearLocalNotifications}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.2)' }]}>
-                  <Ionicons name="trash-outline" size={18} color="#ef4444" />
-                </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: colors.text }]}>Clear Local Notifications</Text>
-                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Remove stored and scheduled items</Text>
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingTitle, { color: colors.text }]}>
+                    Theme
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                    {localIsDarkMode ? 'Dark mode enabled' : 'Light mode enabled'}
+                  </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward-outline" size={18} color="#94a3b8" />
+              <View style={[styles.toggleContainer, { backgroundColor: localIsDarkMode ? colors.primary : colors.border }]}>
+                <View style={[styles.toggleCircle, { 
+                  backgroundColor: '#fff',
+                  left: themeToggleLeft,
+                }]} />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* Notifications Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }] }>
-            <TouchableOpacity style={styles.row} onPress={() => router.push('/(screens)/privacy')}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(8, 145, 178, 0.08)', borderColor: 'rgba(8, 145, 178, 0.2)' }]}>
-                  <Ionicons name="shield-checkmark-outline" size={18} color="#0891b2" />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Notifications</Text>
+          
+          <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={handleToggleDailySummaries}
+            >
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons 
+                    name="notifications" 
+                    size={22} 
+                    color={colors.primary} 
+                  />
                 </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: colors.text }]}>Privacy & Security</Text>
-                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Manage your privacy options</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward-outline" size={18} color="#94a3b8" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.row} onPress={handleSignOut}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.2)' }]}>
-                  <Ionicons name="log-out-outline" size={18} color="#ef4444" />
-                </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: colors.text }]}>Sign Out</Text>
-                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Log out of your account</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward-outline" size={18} color="#94a3b8" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.row} onPress={() => Alert.alert(
-              'Delete Account',
-              'This action cannot be undone. All your data will be permanently deleted. Contact support for full deletion.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete', style: 'destructive', onPress: () => Alert.alert('Account Data Cleared', 'Your profile data removal is handled from support.') }
-              ]
-            )}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.2)' }]}>
-                  <Ionicons name="trash-outline" size={18} color="#ef4444" />
-                </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: colors.text }]}>Delete Account</Text>
-                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Permanently remove your account</Text>
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingTitle, { color: colors.text }]}>
+                    Daily Summaries
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                    {dailySummariesEnabled ? 'Receive daily task summaries' : 'Daily summaries disabled'}
+                  </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward-outline" size={18} color="#94a3b8" />
+              <View style={[styles.toggleContainer, { backgroundColor: dailySummariesEnabled ? colors.primary : colors.border }]}>
+                <View style={[styles.toggleCircle, { 
+                  backgroundColor: '#fff',
+                  left: notificationToggleLeft,
+                }]} />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* Account Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
-          <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }] }>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(6, 182, 212, 0.1)', borderColor: 'rgba(6, 182, 212, 0.2)' }]}>
-                  <Ionicons name="moon-outline" size={18} color="#06b6d4" />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
+          
+          <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity 
+              style={[styles.settingItem, styles.settingItemWithBorder]}
+              onPress={handlePrivacyPress}
+            >
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
                 </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: colors.text }]}>Dark Mode</Text>
-                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>{theme === 'dark' ? 'On' : 'Off'}</Text>
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingTitle, { color: colors.text }]}>
+                    Privacy & Security
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                    Manage your privacy settings
+                  </Text>
                 </View>
               </View>
-              <Switch value={theme === 'dark'} onValueChange={toggleTheme} thumbColor={'#06b6d4'} trackColor={{ false: '#e2e8f0', true: '#bae6fd' }} />
-            </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={handleSupportPress}
+            >
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="help-circle" size={22} color={colors.primary} />
+                </View>
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingTitle, { color: colors.text }]}>
+                    Help & Support
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                    Get help and contact support
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Actions Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Actions</Text>
+          
+          <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity 
+              style={[styles.settingItem, styles.settingItemWithBorder]}
+              onPress={handleLogout}
+            >
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: '#FF6B6B' + '15' }]}>
+                  <Ionicons name="log-out" size={22} color="#FF6B6B" />
+                </View>
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingTitle, { color: colors.text }]}>
+                    Logout
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                    Sign out of your account
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={handleDeleteAccount}
+            >
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: '#FF4757' + '15' }]}>
+                  <Ionicons name="trash" size={22} color="#FF4757" />
+                </View>
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingTitle, { color: '#FF4757' }]}>
+                    Delete Account
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                    Permanently delete your account
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* App Info */}
+        <View style={styles.appInfo}>
+          <Text style={[styles.appVersion, { color: colors.textSecondary }]}>
+            Actionable v1.0.0
+          </Text>
+          <Text style={[styles.appDescription, { color: colors.textSecondary }]}>
+            Built by AmirDevStudio
+          </Text>
         </View>
       </ScrollView>
-    </View>
-  )
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-  header: {
-    width: '100%',
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    marginTop: 4,
   },
   content: {
-    padding: 16,
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  header: {
+    paddingVertical: 24,
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    fontWeight: '400',
   },
   section: {
-    marginBottom: 16,
+    marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
     paddingHorizontal: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    fontWeight: '600',
   },
-  card: {
-    backgroundColor: '#ffffff',
+  sectionCard: {
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    overflow: 'hidden',
+    paddingVertical: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
-  row: {
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
-  rowLeft: {
+  settingItemWithBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    flex: 1,
   },
-  iconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    marginRight: 12,
+    marginRight: 16,
   },
-  rowTitle: {
+  settingText: {
+    flex: 1,
+  },
+  settingTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    marginBottom: 2,
   },
-  rowSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 2,
+  settingDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '400',
   },
-  filterButton: {
-    flexDirection: 'row',
+  toggleContainer: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    padding: 2,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  toggleCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+    position: 'absolute',
+    left: 2,
+    top: 2,
+  },
+  circleToggleContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginRight: 8,
-    backgroundColor: '#ffffff',
+    borderWidth: 2,
   },
-  filterButtonActive: {
-    borderColor: '#bae6fd',
-    backgroundColor: '#EEF6FF',
+  circleToggle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
   },
-  filterButtonText: {
-    marginLeft: 6,
-    color: '#7F8C8D',
-    fontWeight: '600',
+  appInfo: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
   },
-  filterButtonTextActive: {
-    color: '#1976D2',
+  appVersion: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
   },
-})
+  appDescription: {
+    fontSize: 12,
+    fontWeight: '400',
+  },
+});

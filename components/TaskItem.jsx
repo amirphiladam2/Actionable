@@ -1,20 +1,22 @@
 // components/TaskItem/TaskItem.js
-import React from 'react';
-import { TouchableOpacity, View, Text ,StyleSheet} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getCategoryById } from '../utils/taskUtils';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { TASK_CATEGORIES } from '../constants/index';
+import { ThemeContext } from '../context/ThemeContext';
+import { getCategoryById } from '../utils/taskUtils';
 
 
 const TaskItem = ({ task, onToggle, onPress }) => {
   const category = getCategoryById(task.category, TASK_CATEGORIES);
+  const { colors } = React.useContext(ThemeContext);
   
   const handleToggle = () => onToggle?.(task.id);
   const handlePress = () => onPress?.(task);
 
   return (
     <TouchableOpacity
-      style={[styles.taskItem, task.completed && styles.taskItemCompleted]}
+      style={[styles.taskItem, { backgroundColor: colors.surface, borderColor: colors.border }, task.completed && styles.taskItemCompleted]}
       onPress={handlePress || handleToggle}
       onLongPress={handlePress}
       activeOpacity={0.7}
@@ -22,13 +24,17 @@ const TaskItem = ({ task, onToggle, onPress }) => {
       accessibilityRole="button"
     >
       <View style={styles.taskLeft}>
-        <TouchableOpacity
-          style={[styles.checkbox, task.completed && styles.checkboxCompleted]}
-          onPress={handleToggle}
-          accessibilityLabel={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: task.completed }}
-        >
+               <TouchableOpacity
+                 style={[
+                   styles.checkbox, 
+                   { borderColor: colors.border }, 
+                   task.completed && { backgroundColor: colors.primary, borderColor: colors.primary }
+                 ]}
+                 onPress={handleToggle}
+                 accessibilityLabel={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                 accessibilityRole="checkbox"
+                 accessibilityState={{ checked: task.completed }}
+               >
           {task.completed && (
             <Ionicons name="checkmark" size={16} color="#fff" />
           )}
@@ -36,6 +42,7 @@ const TaskItem = ({ task, onToggle, onPress }) => {
         <View style={styles.taskContent}>
           <Text style={[
             styles.taskText,
+            { color: colors.text },
             task.completed && styles.taskTextCompleted
           ]}>
             {task.title}
@@ -56,7 +63,6 @@ const TaskItem = ({ task, onToggle, onPress }) => {
 
 const styles = StyleSheet.create({
   taskItem: {
-    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -65,7 +71,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
     marginBottom: 12,
   },
   taskItemCompleted: {
@@ -80,15 +85,14 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#e5e7eb',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     marginTop: 2,
   },
   checkboxCompleted: {
-    backgroundColor: '#06b6d4',
-    borderColor: '#06b6d4',
+    backgroundColor: undefined, // Will be set inline using colors.primary
+    borderColor: undefined, // Will be set inline using colors.primary
   },
   taskContent: {
     flex: 1,
@@ -96,7 +100,6 @@ const styles = StyleSheet.create({
   taskText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
     lineHeight: 22,
   },
   taskTextCompleted: {

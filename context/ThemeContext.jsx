@@ -1,16 +1,21 @@
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 export const ThemeContext = createContext({
   theme: 'light',
+  isDarkMode: false,
   colors: {
     background: '#F8F9FA',
     surface: '#FFFFFF',
     border: '#E9ECEF',
     text: '#0f172a',
+    textSecondary: '#64748b',
     muted: '#64748b',
     primary: '#06b6d4',
     accent: '#0891b2',
+    error: '#ef4444',
+    success: '#10b981',
+    warning: '#f59e0b',
   },
   toggleTheme: () => {},
 });
@@ -20,9 +25,13 @@ const lightColors = {
   surface: '#FFFFFF',
   border: '#E9ECEF',
   text: '#0f172a',
+  textSecondary: '#64748b',
   muted: '#64748b',
   primary: '#06b6d4',
   accent: '#0891b2',
+  error: '#ef4444',
+  success: '#10b981',
+  warning: '#f59e0b',
 };
 
 const darkColors = {
@@ -30,9 +39,13 @@ const darkColors = {
   surface: '#12172a',
   border: '#1f273f',
   text: '#e5e7eb',
+  textSecondary: '#9aa3b2',
   muted: '#9aa3b2',
   primary: '#06b6d4',
   accent: '#22d3ee',
+  error: '#ef4444',
+  success: '#10b981',
+  warning: '#f59e0b',
 };
 
 export function ThemeProvider({ children }) {
@@ -52,6 +65,7 @@ export function ThemeProvider({ children }) {
 
   const value = useMemo(() => ({
     theme,
+    isDarkMode: theme === 'dark',
     colors: theme === 'light' ? lightColors : darkColors,
     toggleTheme,
   }), [theme, toggleTheme]);

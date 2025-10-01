@@ -1,9 +1,11 @@
 // components/CategoryCard/CategoryCard.js
-import React from 'react';
-import { TouchableOpacity, View, Text ,StyleSheet} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ThemeContext } from '../context/ThemeContext';
 
 const CategoryCard = ({ category, onPress, isSelected = false }) => {
+  const { colors } = React.useContext(ThemeContext);
   const handlePress = () => onPress?.(category);
 
   return (
@@ -26,6 +28,7 @@ const CategoryCard = ({ category, onPress, isSelected = false }) => {
       </View>
       <Text style={[
         styles.categoryName,
+        { color: colors.muted },
         isSelected && { color: category.color, fontWeight: '700' }
       ]}>
         {category.name}
@@ -50,7 +53,6 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
     textAlign: 'center',
   },
 });

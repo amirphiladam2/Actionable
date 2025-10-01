@@ -1,17 +1,22 @@
 // components/Header/Header.js
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ThemeContext } from '../context/ThemeContext';
 import { supabase } from '../lib/supabase';
 
 const Header = ({
   onNotificationPress,
   notificationCount = 0,
   navigation,
+  showBackButton = false,
+  onBackPress,
+  title = null,
 }) => {
   const [userName, setUserName] = useState('Guest');
   const [greeting, setGreeting] = useState('Good Morning');
   const { day, month } = getFormattedDate();
+  const { colors } = React.useContext(ThemeContext);
 
   // Fetch user data from Supabase
   useEffect(() => {
@@ -48,7 +53,7 @@ const Header = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      // Silently handle error
     }
   };
 
@@ -71,53 +76,74 @@ const Header = ({
 
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
       {/* Background shapes */}
       <View style={styles.circleShape} />
       <View style={styles.rectangleShape} />
       
       <View style={styles.headerContent}>
-        <LeftSection
-          greeting={greeting}
-          userName={userName}
-          onMenuPress={() => navigation?.openDrawer?.()}
-        />
+        {showBackButton ? (
+          <BackButtonSection
+            title={title}
+            onBackPress={onBackPress}
+            colors={colors}
+          />
+        ) : (
+          <LeftSection
+            greeting={greeting}
+            userName={userName}
+            onMenuPress={() => navigation?.openDrawer?.()}
+            colors={colors}
+          />
+        )}
         <RightSection
           day={day}
           month={month}
           onNotificationPress={onNotificationPress}
           notificationCount={notificationCount}
+          colors={colors}
         />
       </View>
     </View>
   );
 };
 
-const LeftSection = ({ greeting, userName, onMenuPress }) => (
+const LeftSection = ({ greeting, userName, onMenuPress, colors }) => (
   <View style={styles.headerLeft}>
     <TouchableOpacity onPress={onMenuPress} style={styles.menuButton}>
-      <Ionicons name="menu-outline" size={24} color="#4B5563" />
+      <Ionicons name="menu-outline" size={24} color={colors.muted} />
     </TouchableOpacity>
     <View style={styles.textContainer}>
-      <Text style={styles.greeting}>{greeting}</Text>
-      <Text style={styles.userName}>{userName}</Text>
+      <Text style={[styles.greeting, { color: colors.muted }]}>{greeting}</Text>
+      <Text style={[styles.userName, { color: colors.text }]}>{userName}</Text>
     </View>
   </View>
 );
 
-const RightSection = ({ day, month, onNotificationPress, notificationCount }) => (
+const BackButtonSection = ({ title, onBackPress, colors }) => (
+  <View style={styles.headerLeft}>
+    <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+      <Ionicons name="arrow-back" size={24} color={colors.text} />
+    </TouchableOpacity>
+    <View style={styles.textContainer}>
+      <Text style={[styles.headerTitle, { color: colors.text }]}>{title}</Text>
+    </View>
+  </View>
+);
+
+const RightSection = ({ day, month, onNotificationPress, notificationCount, colors }) => (
   <View style={styles.headerRight}>
-    <View style={styles.dateContainer}>
-      <Text style={styles.dateNumber}>{day}</Text>
-      <Text style={styles.dateMonth}>{month}</Text>
+    <View style={[styles.dateContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Text style={[styles.dateNumber, { color: colors.text }]}>{day}</Text>
+      <Text style={[styles.dateMonth, { color: colors.muted }]}>{month}</Text>
     </View>
     <TouchableOpacity
-      style={styles.notificationButton}
+      style={[styles.notificationButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onPress={onNotificationPress}
       accessibilityLabel={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ''}`}
     >
-      <Ionicons name="notifications-outline" size={24} color="#4B5563" />
-      {notificationCount > 0 && <View style={styles.notificationBadge} />}
+      <Ionicons name="notifications-outline" size={24} color={colors.muted} />
+      {notificationCount > 0 && <View style={[styles.notificationBadge, { backgroundColor: colors.primary }]} />}
     </TouchableOpacity>
   </View>
 );
@@ -132,10 +158,8 @@ const getFormattedDate = () => {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#f8fafc',
     paddingVertical: 40,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -177,19 +201,24 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 4,
   },
+  backButton: {
+    padding: 4,
+  },
   textContainer: {
     flex: 1,
   },
   greeting: {
     fontSize: 14,
-    color: '#6b7280',
     marginBottom: 4,
     fontWeight: '500',
   },
   userName: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1f2937',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
   },
   headerRight: {
     flexDirection: 'row',
@@ -198,31 +227,25 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(229, 231, 235, 0.5)',
   },
   dateNumber: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
     lineHeight: 20,
   },
   dateMonth: {
     fontSize: 11,
-    color: '#6b7280',
     fontWeight: '600',
   },
   notificationButton: {
     position: 'relative',
     padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(229, 231, 235, 0.5)',
   },
   notificationBadge: {
     position: 'absolute',
@@ -230,7 +253,6 @@ const styles = StyleSheet.create({
     right: 6,
     width: 8,
     height: 8,
-    backgroundColor: '#ef4444',
     borderRadius: 4,
   },
 });

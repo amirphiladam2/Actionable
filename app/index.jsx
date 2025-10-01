@@ -1,18 +1,18 @@
-import React from 'react';
-import { 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView,
-  StatusBar,
-  Dimensions,
-  ScrollView
-} from "react-native";
-import { useRouter, Redirect } from "expo-router"; // Added Redirect import
 import { LinearGradient } from 'expo-linear-gradient';
-import { landingStyles } from '../styles/landingStyles';
+import { Redirect, useRouter } from "expo-router"; // Added Redirect import
+import React from 'react';
+import {
+    Dimensions,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
+import { landingStyles } from '../styles/landingStyles';
 
 const { width, height } = Dimensions.get('window');
     

@@ -1,7 +1,7 @@
 // hooks/useUpcomingTasks.js
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 
 export const useUpcomingTasks = () => {
   const [upcomingTasks, setUpcomingTasks] = useState([]);
@@ -55,7 +55,6 @@ export const useUpcomingTasks = () => {
       
       setUpcomingTasks(data || []);
     } catch (err) {
-      console.error('Error fetching upcoming tasks:', err);
       setError(err.message);
     } finally {
       setLoading(false);

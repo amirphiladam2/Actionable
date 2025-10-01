@@ -1,5 +1,5 @@
 // hooks/useAuth.js
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { authService } from '../services/authService';
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -25,7 +25,6 @@ export const useAuth = () => {
     // Listen for auth state changes
     const { data: { subscription } } = authService.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
         setUser(session?.user || null);
         setInitializing(false);
       }

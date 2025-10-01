@@ -1,7 +1,7 @@
 // hooks/useTasks.js
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 import { taskNotificationService } from '../services/notificationService';
 
 export const useTasks = () => {
@@ -37,7 +37,6 @@ export const useTasks = () => {
       
       setTasks(data || []);
     } catch (err) {
-      console.error('Error fetching tasks:', err);
       setError(`Failed to load tasks: ${err.message}`);
     } finally {
       setLoading(false);
@@ -70,8 +69,6 @@ export const useTasks = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Real-time update:', payload);
-          
           switch (payload.eventType) {
             case 'INSERT':
               setTasks(prev => {
@@ -96,7 +93,7 @@ export const useTasks = () => {
               break;
             
             default:
-              console.warn('Unknown event type:', payload.eventType);
+              // Unknown event type - ignore
           }
         }
       )
@@ -157,7 +154,6 @@ export const useTasks = () => {
       }
       return true;
     } catch (err) {
-      console.error('Error toggling task:', err);
       setError(`Failed to update task: ${err.message}`);
       
       // Revert optimistic update
@@ -200,6 +196,10 @@ export const useTasks = () => {
       user_id: user.id,
       // Don't set created_at and updated_at - let database defaults handle it
     };
+    // Remove UI-only fields not present in DB
+    if (Object.prototype.hasOwnProperty.call(taskData, 'has_time')) {
+      delete taskData.has_time;
+    }
 
     try {
       const { data, error } = await supabase
@@ -226,7 +226,6 @@ export const useTasks = () => {
       
       return { success: true, task: data };
     } catch (err) {
-      console.error('Error adding task:', err);
       setError(`Failed to add task: ${err.message}`);
       return { success: false, error: err.message };
     }
@@ -260,7 +259,6 @@ export const useTasks = () => {
       await taskNotificationService.cancelTaskNotifications(taskId);
       return true;
     } catch (err) {
-      console.error('Error deleting task:', err);
       setError(`Failed to delete task: ${err.message}`);
       
       // Revert optimistic update
@@ -295,8 +293,13 @@ export const useTasks = () => {
 
     clearError();
 
-    // Prepare updates (updated_at will be handled by database trigger)
+    // Prepare updates (updated_at will be handled by the database trigger)
     const updateData = { ...updates };
+
+    // Strip UI-only fields not present in the DB schema
+    if (Object.prototype.hasOwnProperty.call(updateData, 'has_time')) {
+      delete updateData.has_time;
+    }
 
     // Remove undefined values
     Object.keys(updateData).forEach(key => {
@@ -338,7 +341,6 @@ export const useTasks = () => {
       }
       return true;
     } catch (err) {
-      console.error('Error updating task:', err);
       setError(`Failed to update task: ${err.message}`);
       
       // Revert optimistic update
@@ -378,7 +380,6 @@ export const useTasks = () => {
       if (error) throw error;
       return true;
     } catch (err) {
-      console.error('Error deleting completed tasks:', err);
       setError(`Failed to delete completed tasks: ${err.message}`);
       
       // Revert optimistic update
@@ -423,7 +424,6 @@ export const useTasks = () => {
       if (error) throw error;
       return true;
     } catch (err) {
-      console.error('Error marking all tasks complete:', err);
       setError(`Failed to mark all tasks complete: ${err.message}`);
       
       // Revert optimistic update

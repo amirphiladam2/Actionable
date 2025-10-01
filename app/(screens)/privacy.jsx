@@ -1,10 +1,17 @@
-import React, { useState, useCallback } from 'react';
-import { 
-  View, Text, TextInput, TouchableOpacity, Modal, Alert, 
-  StyleSheet, Platform, ScrollView, ActivityIndicator
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../../lib/supabase'; 
+import React, { useCallback, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Linking,
+    Modal,
+    Platform, ScrollView,
+    StyleSheet,
+    Text, TextInput, TouchableOpacity,
+    View
+} from 'react-native';
+import { ThemeContext } from '../../context/ThemeContext';
+import { supabase } from '../../lib/supabase';
 
 export default function PrivacySecurity() {
   const [showModal, setShowModal] = useState(false);
@@ -17,6 +24,7 @@ export default function PrivacySecurity() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { colors } = React.useContext(ThemeContext);
 
   const updateFormData = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -92,33 +100,54 @@ export default function PrivacySecurity() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Account Security</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.header, { color: colors.text }]}>Account Security</Text>
       
       <TouchableOpacity 
-        style={styles.changePasswordButton}
+        style={[styles.changePasswordButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
         onPress={() => setShowModal(true)}
         disabled={isLoading}
       >
-        <Ionicons name="key-outline" size={22} color="#06b6d4" />
+        <Ionicons name="key-outline" size={22} color={colors.primary} />
         <View style={styles.buttonTextContainer}>
-          <Text style={styles.buttonTitle}>Change Password</Text>
-          <Text style={styles.buttonSubtitle}>Update your account password</Text>
+          <Text style={[styles.buttonTitle, { color: colors.text }]}>Change Password</Text>
+          <Text style={[styles.buttonSubtitle, { color: colors.muted }]}>Update your account password</Text>
         </View>
-        <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </TouchableOpacity>
+
+      {/* Privacy Policy Section */}
+      <View style={styles.privacySection}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Privacy Policy</Text>
+        
+        <TouchableOpacity 
+          style={[styles.privacyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={() => Linking.openURL('https://www.privacypolicygenerator.info/live.php?token=your-privacy-policy-token')}
+        >
+          <View style={styles.cardLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.cardText}>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Privacy Policy</Text>
+              <Text style={[styles.cardSubtitle, { color: colors.muted }]}>How we collect and use your data</Text>
+            </View>
+          </View>
+          <Ionicons name="open-outline" size={20} color={colors.muted} />
+        </TouchableOpacity>
+      </View>
 
       <Modal 
         visible={showModal} 
         animationType="slide"
         onRequestClose={resetForm}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={resetForm}>
-              <Ionicons name="arrow-back" size={24} color="#06b6d4" />
+              <Ionicons name="arrow-back" size={24} color={colors.primary} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Change Password</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Change Password</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -127,13 +156,14 @@ export default function PrivacySecurity() {
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Current Password</Text>
-              <View style={styles.passwordInputContainer}>
+              <Text style={[styles.label, { color: colors.muted }]}>Current Password</Text>
+              <View style={[styles.passwordInputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <TextInput
-                  style={styles.passwordInput}
+                  style={[styles.passwordInput, { color: colors.text }]}
                   value={formData.currentPassword}
                   onChangeText={(text) => updateFormData('currentPassword', text)}
                   placeholder="Enter current password"
+                  placeholderTextColor={colors.muted}
                   secureTextEntry={!showCurrentPassword}
                   autoCapitalize="none"
                   editable={!isLoading}
@@ -145,20 +175,21 @@ export default function PrivacySecurity() {
                   <Ionicons 
                     name={showCurrentPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color="#64748b" 
+                    color={colors.muted} 
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>New Password</Text>
-              <View style={styles.passwordInputContainer}>
+              <Text style={[styles.label, { color: colors.muted }]}>New Password</Text>
+              <View style={[styles.passwordInputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <TextInput
-                  style={styles.passwordInput}
+                  style={[styles.passwordInput, { color: colors.text }]}
                   value={formData.newPassword}
                   onChangeText={(text) => updateFormData('newPassword', text)}
                   placeholder="At least 6 characters"
+                  placeholderTextColor={colors.muted}
                   secureTextEntry={!showNewPassword}
                   autoCapitalize="none"
                   editable={!isLoading}
@@ -170,20 +201,21 @@ export default function PrivacySecurity() {
                   <Ionicons 
                     name={showNewPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color="#64748b" 
+                    color={colors.muted} 
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <View style={styles.passwordInputContainer}>
+              <Text style={[styles.label, { color: colors.muted }]}>Confirm Password</Text>
+              <View style={[styles.passwordInputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <TextInput
-                  style={styles.passwordInput}
+                  style={[styles.passwordInput, { color: colors.text }]}
                   value={formData.confirmPassword}
                   onChangeText={(text) => updateFormData('confirmPassword', text)}
                   placeholder="Re-enter new password"
+                  placeholderTextColor={colors.muted}
                   secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                   editable={!isLoading}
@@ -195,23 +227,23 @@ export default function PrivacySecurity() {
                   <Ionicons 
                     name={showConfirmPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color="#64748b" 
+                    color={colors.muted} 
                   />
                 </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
 
-          <View style={styles.footer}>
+          <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
             <TouchableOpacity 
-              style={[styles.button, styles.cancelButton]}
+              style={[styles.button, styles.cancelButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={resetForm}
               disabled={isLoading}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={[styles.cancelText, { color: colors.muted }]}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.button, styles.submitButton]}
+              style={[styles.button, styles.submitButton, { backgroundColor: colors.primary }]}
               onPress={handleChangePassword}
               disabled={isLoading}
             >
@@ -231,20 +263,17 @@ export default function PrivacySecurity() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     padding: 20,
   },
   header: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#1e293b',
     marginBottom: 30,
     marginTop: 10,
   },
   changePasswordButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 18,
     shadowColor: '#000',
@@ -252,6 +281,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+    borderWidth: 1,
   },
   buttonTextContainer: {
     flex: 1,
@@ -260,16 +290,13 @@ const styles = StyleSheet.create({
   buttonTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1e293b',
   },
   buttonSubtitle: {
     fontSize: 14,
-    color: '#64748b',
     marginTop: 4,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -278,13 +305,10 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: Platform.OS === 'ios' ? 50 : 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#fff',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1e293b',
   },
   modalContent: {
     padding: 20,
@@ -296,22 +320,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#475569',
     marginBottom: 8,
   },
   passwordInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     borderRadius: 10,
   },
   passwordInput: {
     flex: 1,
     padding: 15,
     fontSize: 16,
-    color: '#1e293b',
   },
   eyeIcon: {
     padding: 15,
@@ -322,8 +342,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 30 : 20,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    backgroundColor: '#fff',
   },
   button: {
     flex: 1,
@@ -333,14 +351,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f1f5f9',
     marginRight: 10,
+    borderWidth: 1,
   },
   submitButton: {
-    backgroundColor: '#06b6d4',
   },
   cancelText: {
-    color: '#64748b',
     fontWeight: '600',
     fontSize: 16,
   },
@@ -348,5 +364,47 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 16,
+  },
+  privacySection: {
+    marginTop: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  privacyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  cardText: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

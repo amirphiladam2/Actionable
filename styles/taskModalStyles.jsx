@@ -1,5 +1,5 @@
 // styles/taskModalStyles.js
-import { StyleSheet, Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -14,7 +14,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '90%',
@@ -27,25 +26,21 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   cancelButton: {
     fontSize: 16,
-    color: '#666',
     fontWeight: '500',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
   },
   saveButton: {
     fontSize: 16,
-    color: '#4A90E2',
     fontWeight: '600',
   },
   saveButtonDisabled: {
-    color: '#C7C7CC',
+    opacity: 0.5,
   },
   
   // Title Section
@@ -53,18 +48,15 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   titleInput: {
     fontSize: 16,
-    color: '#333',
     minHeight: 50,
     textAlignVertical: 'top',
     paddingVertical: 8,
   },
   characterCount: {
     fontSize: 12,
-    color: '#999',
     textAlign: 'right',
     marginTop: 4,
   },
@@ -74,12 +66,10 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   optionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 12,
   },
   quickDateOptions: {
@@ -91,9 +81,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   quickDateOptionSelected: {
     backgroundColor: '#4A90E2',
@@ -101,7 +89,6 @@ export const styles = StyleSheet.create({
   },
   quickDateOptionText: {
     fontSize: 14,
-    color: '#666',
     fontWeight: '500',
   },
   quickDateOptionTextSelected: {
@@ -118,13 +105,10 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   dateTimeButtonText: {
     fontSize: 15,
-    color: '#333',
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -136,7 +120,6 @@ export const styles = StyleSheet.create({
   },
   clearTimeText: {
     fontSize: 14,
-    color: '#FF6B6B',
     fontWeight: '500',
   },
   
@@ -145,7 +128,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   priorityOptions: {
     flexDirection: 'row',
@@ -159,9 +141,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   priorityOptionSelected: {
     backgroundColor: '#E3F2FD',
@@ -175,7 +155,6 @@ export const styles = StyleSheet.create({
   },
   priorityOptionText: {
     fontSize: 13,
-    color: '#666',
     fontWeight: '500',
   },
   priorityOptionTextSelected: {
@@ -187,7 +166,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   categoryOptions: {
     flexDirection: 'row',
@@ -201,7 +179,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 20,
     borderWidth: 1.5,
-    backgroundColor: '#fff',
     minWidth: width * 0.25,
   },
   categoryOptionSelected: {
@@ -209,7 +186,6 @@ export const styles = StyleSheet.create({
   },
   categoryOptionText: {
     fontSize: 14,
-    color: '#666',
     marginLeft: 6,
     fontWeight: '500',
   },
@@ -224,15 +200,12 @@ export const styles = StyleSheet.create({
   },
   descriptionInput: {
     fontSize: 15,
-    color: '#333',
     minHeight: 80,
     textAlignVertical: 'top',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   
   // Custom Pickers
@@ -242,7 +215,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   pickerContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: height * 0.7,
@@ -254,21 +226,17 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   pickerCancel: {
     fontSize: 16,
-    color: '#666',
     fontWeight: '500',
   },
   pickerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
   },
   pickerClear: {
     fontSize: 16,
-    color: '#FF6B6B',
     fontWeight: '500',
   },
   pickerScroll: {
@@ -278,14 +246,12 @@ export const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   pickerItemSelected: {
     backgroundColor: '#E3F2FD',
   },
   pickerItemText: {
     fontSize: 16,
-    color: '#333',
   },
   pickerItemTextSelected: {
     color: '#4A90E2',
@@ -296,24 +262,131 @@ export const styles = StyleSheet.create({
   popularTimesSection: {
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   sectionHeader: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#F8F9FA',
   },
   popularTimeItem: {
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   popularTimeText: {
     fontSize: 16,
-    color: '#333',
+  },
+
+  // New Improved Picker Styles
+  pickerOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  pickerModal: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    maxHeight: '80%',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  pickerButton: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+
+  // Date Picker Styles
+  dateGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 16,
+    gap: 8,
+  },
+  dateItem: {
+    width: (width - 80) / 7,
+    aspectRatio: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 4,
+  },
+  dateDay: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  dateWeekday: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  dateLabel: {
+    fontSize: 8,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+
+  // Time Picker Styles
+  timePickerContent: {
+    maxHeight: 400,
+  },
+  popularTimesSection: {
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  popularTimesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  popularTimeItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  popularTimeText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  allTimesSection: {
+    padding: 16,
+  },
+  timeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  timeItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  timeText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

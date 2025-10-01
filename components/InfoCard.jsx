@@ -1,74 +1,76 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import {useRouter} from 'expo-router'
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ThemeContext } from '../context/ThemeContext';
 
 const InfoCard = () => {
   const router=useRouter();
+  const { colors } = React.useContext(ThemeContext);
   const handlePress = (option) => {
-    console.log(`${option} Tapped`);
+    // Handle option press
   };
 
   return (
     <View style={styles.settings}>
-      <Text style={styles.settingHeader}>Settings</Text>
+      <Text style={[styles.settingHeader, { color: colors.text }]}>Settings</Text>
       <View style={styles.cards}>
         <TouchableOpacity 
-          style={styles.settingItem} 
+          style={[styles.settingItem, { backgroundColor: colors.surface, borderColor: colors.border }]} 
           onPress={() => handlePress('Profile')}
         >
           <View style={styles.settingRow}>
-            <Ionicons name="person" size={24} color="#848787" />
-            <Text style={styles.settingText}>Profile</Text>
+            <Ionicons name="person" size={24} color={colors.muted} />
+            <Text style={[styles.settingText, { color: colors.text }]}>Profile</Text>
           </View>
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.settingItem} 
+          style={[styles.settingItem, { backgroundColor: colors.surface, borderColor: colors.border }]} 
           onPress={() => handlePress('Notification')}
         >
           <View style={styles.settingRow}>
-            <Ionicons name="notifications" size={24} color="#848787" />
-            <Text style={styles.settingText}>Notification</Text>
+            <Ionicons name="notifications" size={24} color={colors.muted} />
+            <Text style={[styles.settingText, { color: colors.text }]}>Notification</Text>
           </View>
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.settingItem} 
+          style={[styles.settingItem, { backgroundColor: colors.surface, borderColor: colors.border }]} 
           onPress={() => handlePress('Appearance')}
         >
           <View style={styles.settingRow}>
-            <Ionicons name="color-palette" size={24} color="#848787" />
-            <Text style={styles.settingText}>Appearance</Text>
+            <Ionicons name="color-palette" size={24} color={colors.muted} />
+            <Text style={[styles.settingText, { color: colors.text }]}>Appearance</Text>
           </View>
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.settingItem} 
+          style={[styles.settingItem, { backgroundColor: colors.surface, borderColor: colors.border }]} 
           onPress={() => handlePress('Privacy')}
         >
           <View style={styles.settingRow}>
-            <Ionicons name="lock-closed" size={24} color="#848787" />
-            <Text style={styles.settingText}>Privacy</Text>
+            <Ionicons name="lock-closed" size={24} color={colors.muted} />
+            <Text style={[styles.settingText, { color: colors.text }]}>Privacy</Text>
           </View>
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.settingItem} 
+          style={[styles.settingItem, { backgroundColor: colors.surface, borderColor: colors.border }]} 
           onPress={() => handlePress('Help and Support')}
         >
           <View style={styles.settingRow}>
-            <Ionicons name="help-circle" size={24} color="#848787" />
-            <Text style={styles.settingText}>Help & Support</Text>
+            <Ionicons name="help-circle" size={24} color={colors.muted} />
+            <Text style={[styles.settingText, { color: colors.text }]}>Help & Support</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={styles.settingItem} 
+          style={[styles.settingItem, { backgroundColor: colors.surface, borderColor: colors.border }]} 
           onPress={() => router.push('/(auth)/AuthScreen')}
         >
           <View style={styles.settingRow}>
-            <Ionicons name="log-out" size={24} color="#848787" />
-            <Text style={styles.settingText}>Logout</Text>
+            <Ionicons name="log-out" size={24} color={colors.muted} />
+            <Text style={[styles.settingText, { color: colors.text }]}>Logout</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -96,7 +98,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     marginBottom: 5,
-    borderColor: '#ddd',
   },
   settingRow: {
     flexDirection: 'row',

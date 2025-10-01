@@ -1,13 +1,12 @@
 // services/authService.js
-import { supabase } from '../lib/supabase';
 import * as Linking from 'expo-linking';
+import { supabase } from '../lib/supabase';
 
 export const authService = {
   getCurrentSession: async () => {
     try {
       return await supabase.auth.getSession();
     } catch (error) {
-      console.error('Error getting current session:', error);
       throw error;
     }
   },
@@ -44,7 +43,6 @@ export const authService = {
         needsConfirmation: !data.session, // If no session, email confirmation needed
       };
     } catch (error) {
-      console.error('Sign up error:', error);
       return {
         success: false,
         error: {
@@ -78,7 +76,6 @@ export const authService = {
         session: data.session,
       };
     } catch (error) {
-      console.error('Sign in error:', error);
       return {
         success: false,
         error: {
@@ -91,7 +88,6 @@ export const authService = {
   signInWithGoogle: async () => {
     try {
       const redirectUrl = Linking.createURL('/auth/callback');
-      console.log('Redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -122,7 +118,6 @@ export const authService = {
         url: data.url,
       };
     } catch (error) {
-      console.error('Google sign in error:', error);
       return {
         success: false,
         error: {
@@ -150,11 +145,72 @@ export const authService = {
         success: true,
       };
     } catch (error) {
-      console.error('Sign out error:', error);
       return {
         success: false,
         error: {
           message: 'An unexpected error occurred during sign out',
+        },
+      };
+    }
+  },
+
+  deleteAccount: async () => {
+    try {
+      // First, get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        return {
+          success: false,
+          error: {
+            message: 'User not found',
+          },
+        };
+      }
+
+      // Delete user's tasks first
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (tasksError) {
+        console.error('Error deleting tasks:', tasksError);
+        // Continue with account deletion even if tasks deletion fails
+      }
+
+      // Delete user's profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        // Continue with account deletion even if profile deletion fails
+      }
+
+      // Finally, delete the auth user
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
+
+      if (deleteError) {
+        return {
+          success: false,
+          error: {
+            message: deleteError.message,
+            status: deleteError.status,
+          },
+        };
+      }
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'An unexpected error occurred during account deletion',
         },
       };
     }
@@ -183,7 +239,6 @@ export const authService = {
         data,
       };
     } catch (error) {
-      console.error('Reset password error:', error);
       return {
         success: false,
         error: {
@@ -237,7 +292,6 @@ export const authService = {
 
       return { success: false, error: { message: 'No session found in URL' } };
     } catch (error) {
-      console.error('Handle auth callback error:', error);
       return { success: false, error: { message: 'Failed to handle auth callback' } };
     }
   },
@@ -248,8 +302,18 @@ export const authService = {
       const { data: { session } } = await supabase.auth.getSession();
       return !!session;
     } catch (error) {
-      console.error('Error checking authentication:', error);
       return false;
     }
   },
 };
+
+// Export individual functions for easier importing
+export const signOut = authService.signOut;
+export const deleteAccount = authService.deleteAccount;
+export const signUp = authService.signUp;
+export const signIn = authService.signIn;
+export const resetPassword = authService.resetPassword;
+export const updatePassword = authService.updatePassword;
+export const getCurrentSession = authService.getCurrentSession;
+export const onAuthStateChange = authService.onAuthStateChange;
+export const isAuthenticated = authService.isAuthenticated;

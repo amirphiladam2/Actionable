@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  StatusBar,
-  SafeAreaView,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-  Keyboard,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { supabase } from '../../lib/supabase'; 
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    Keyboard,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ThemeContext } from '../../context/ThemeContext';
+import { supabase } from '../../lib/supabase';
 
 const EditProfileScreen = () => {
   // Profile data state
@@ -37,6 +38,7 @@ const EditProfileScreen = () => {
   // Edit states for each field
   const [editingField, setEditingField] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const { colors } = React.useContext(ThemeContext);
 
   // Load user profile on component mount
   useEffect(() => {
@@ -79,7 +81,6 @@ const EditProfileScreen = () => {
         });
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
       Alert.alert('Error', 'Failed to load profile');
     } finally {
       setLoading(false);
@@ -114,7 +115,6 @@ const EditProfileScreen = () => {
       
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
-      console.error('Error saving profile:', error);
       Alert.alert('Error', 'Failed to save profile');
     } finally {
       setSaving(false);
@@ -171,7 +171,7 @@ const EditProfileScreen = () => {
             });
           
           if (uploadError) {
-            console.error('Upload error:', uploadError);
+           
             Alert.alert('Error', 'Failed to upload avatar: ' + uploadError.message);
             return;
           }
@@ -191,7 +191,6 @@ const EditProfileScreen = () => {
             .eq('id', currentUser.id);
           
           if (updateError) {
-            console.error('Update error:', updateError);
             Alert.alert('Error', 'Failed to update profile with new avatar: ' + updateError.message);
             return;
           }
@@ -205,12 +204,12 @@ const EditProfileScreen = () => {
           Alert.alert('Success', 'Avatar updated successfully!');
           
         } catch (uploadErr) {
-          console.error('Upload exception:', uploadErr);
+      
           Alert.alert('Error', 'Failed to upload avatar. Please try again.');
         }
       }
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+    
       Alert.alert('Error', 'Failed to upload avatar');
     } finally {
       setUploadingAvatar(false);
@@ -237,22 +236,23 @@ const EditProfileScreen = () => {
     
     return (
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={[styles.label, { color: colors.muted }]}>{label}</Text>
         <View style={styles.inputContainer}>
           {isEditing ? (
             <TextInput
-              style={[styles.input, styles.editableInput]}
+              style={[styles.input, styles.editableInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               value={value}
               onChangeText={handleChange}
               placeholder={placeholder}
+              placeholderTextColor={colors.muted}
               keyboardType={keyboardType}
               autoCapitalize={keyboardType === 'email-address' ? 'none' : 'words'}
               autoFocus
               onBlur={() => setEditingField(null)}
             />
           ) : (
-            <View style={[styles.input, styles.displayInput]}>
-              <Text style={styles.displayText}>{value || placeholder}</Text>
+            <View style={[styles.input, styles.displayInput, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.displayText, { color: colors.text }]}>{value || placeholder}</Text>
             </View>
           )}
           <TouchableOpacity 
@@ -262,7 +262,7 @@ const EditProfileScreen = () => {
             <Ionicons 
               name={isEditing ? "checkmark" : "create-outline"} 
               size={18} 
-              color="#06b6d4" 
+              color={colors.primary} 
             />
           </TouchableOpacity>
         </View>
@@ -272,25 +272,25 @@ const EditProfileScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#06b6d4" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading profile...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f8f8" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+          <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -301,7 +301,7 @@ const EditProfileScreen = () => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Profile Image Section */}
-        <View style={styles.profileSection}>
+        <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
           <View style={styles.profileImageContainer}>
             <Image
               source={{ 
@@ -310,7 +310,7 @@ const EditProfileScreen = () => {
               style={styles.profileImage}
             />
             <TouchableOpacity 
-              style={styles.editImageButton}
+              style={[styles.editImageButton, { backgroundColor: colors.primary }]}
               onPress={handleImagePicker}
               disabled={uploadingAvatar}
             >
@@ -321,10 +321,10 @@ const EditProfileScreen = () => {
               )}
             </TouchableOpacity>
           </View>
-          <Text style={styles.profileName}>
+          <Text style={[styles.profileName, { color: colors.text }]}>
             {profile.full_name || 'Your Name'}
           </Text>
-          <Text style={styles.profileHandle}>
+          <Text style={[styles.profileHandle, { color: colors.muted }]}>
             {profile.username ? `@${profile.username}` : '@username'}
           </Text>
         </View>
@@ -349,9 +349,9 @@ const EditProfileScreen = () => {
       </ScrollView>
 
       {/* Save Button */}
-      <View style={styles.bottomContainer}>
+      <View style={[styles.bottomContainer, { backgroundColor: colors.surface }]}>
         <TouchableOpacity 
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]} 
+          style={[styles.saveButton, { backgroundColor: colors.primary }, saving && styles.saveButtonDisabled]} 
           onPress={handleSave}
           disabled={saving}
         >
@@ -369,7 +369,6 @@ const EditProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
   },
   header: {
     flexDirection: 'row',
@@ -378,8 +377,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     paddingTop: 25,
-    backgroundColor: '#f8f8f8',
-    borderBottomWidth: 0,
+    borderBottomWidth: 1,
   },
   backButton: {
     padding: 5,
@@ -387,7 +385,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
   },
   headerRight: {
     width: 34,
@@ -397,12 +394,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 120, // Extra padding to prevent overlap with save button
+    paddingBottom: 120, 
   },
   profileSection: {
     alignItems: 'center',
     paddingVertical: 30,
-    backgroundColor: '#f8f8f8',
   },
   profileImageContainer: {
     position: 'relative',
@@ -418,7 +414,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#06b6d4',
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -430,12 +425,10 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000',
     marginBottom: 5,
   },
   profileHandle: {
     fontSize: 14,
-    color: '#666',
   },
   formContainer: {
     paddingHorizontal: 20,
@@ -446,7 +439,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 8,
     textTransform: 'capitalize',
   },
@@ -460,19 +452,15 @@ const styles = StyleSheet.create({
     paddingRight: 50,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   editableInput: {
-    backgroundColor: '#fff',
-    color: '#000',
+    justifyContent: 'center',
   },
   displayInput: {
-    backgroundColor: '#f5f5f5',
     justifyContent: 'center',
   },
   displayText: {
     fontSize: 16,
-    color: '#333',
   },
   editButton: {
     position: 'absolute',
@@ -498,7 +486,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
   },
   bottomContainer: {
     position: 'absolute',
@@ -507,10 +494,8 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: '#f8f8f8',
   },
   saveButton: {
-    backgroundColor: '#06b6d4',
     borderRadius: 12,
     paddingVertical: 18,
     alignItems: 'center',

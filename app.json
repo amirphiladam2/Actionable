@@ -7,13 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "actionable",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/splash-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -22,11 +21,11 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/splash-icon.png"
     },
     "plugins": [
-      "@react-native-google-signin/google-signin",
       "expo-router",
+      "expo-dev-client",
       [
         "expo-splash-screen",
         {
@@ -43,11 +42,13 @@
         {
           "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure authentication"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
     },
+    "platforms": ["ios", "android", "web"],
     "extra": {
       "router": {},
       "eas": {

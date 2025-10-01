@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react'
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking, StatusBar } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { ThemeContext } from '../../context/ThemeContext'
 import { useRouter } from 'expo-router'
+import React, { useState } from 'react'
+import { Linking, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ThemeContext } from '../../context/ThemeContext'
 
 const FAQS = [
   {
@@ -27,7 +27,7 @@ export default function SupportScreen() {
   const toggleIdx = (idx) => setOpenIdx((v) => (v === idx ? -1 : idx));
 
   const openEmail = () => Linking.openURL('mailto:amirdev37@gmail.com?subject=Support%20Request');
-  const openDocs = () => Linking.openURL('https://docs.expo.dev/push-notifications/overview/');
+  const openDocs = () => Linking.openURL('https://beacons.ai/amir.adam');
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -39,7 +39,7 @@ export default function SupportScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>FAQs</Text>
+          <Text style={[styles.sectionTitle, { color: colors.muted }]}>FAQs</Text>
           <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {FAQS.map((item, idx) => (
               <View key={idx} style={styles.faqItem}>
@@ -57,32 +57,33 @@ export default function SupportScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact</Text>
+          <Text style={[styles.sectionTitle, { color: colors.muted }]}>Contact</Text>
           <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <TouchableOpacity style={styles.row} onPress={openEmail}>
               <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(6, 182, 212, 0.1)', borderColor: 'rgba(6, 182, 212, 0.2)' }]}>
-                  <Ionicons name="mail-outline" size={18} color="#06b6d4" />
+                <View style={[styles.iconBadge, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '40' }]}>
+                  <Ionicons name="mail-outline" size={18} color={colors.primary} />
                 </View>
                 <View>
-                  <Text style={styles.rowTitle}>Email Support</Text>
-                  <Text style={styles.rowSubtitle}>Click to send an email</Text>
+                  <Text style={[styles.rowTitle, { color: colors.text }]}>Email Support</Text>
+                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Click to send an email</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward-outline" size={18} color="#94a3b8" />
+              <Ionicons name="chevron-forward-outline" size={18} color={colors.muted} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.row} onPress={openDocs}>
               <View style={styles.rowLeft}>
-                <View style={[styles.iconBadge, { backgroundColor: 'rgba(8, 145, 178, 0.08)', borderColor: 'rgba(8, 145, 178, 0.2)' }]}>
-                  <Ionicons name="book-outline" size={18} color="#0891b2" />
+                <View style={[styles.iconBadge, { backgroundColor: colors.accent + '20', borderColor: colors.accent + '40' }]}>
+                  <Ionicons name="code-outline" size={18} color={colors.accent} />
                 </View>
+                
                 <View>
-                  <Text style={styles.rowTitle}>Push Notifications Guide</Text>
-                  <Text style={styles.rowSubtitle}>Expo documentation</Text>
+                  <Text style={[styles.rowTitle, { color: colors.text }]}>Developer</Text>
+                  <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Amir Adam</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward-outline" size={18} color="#94a3b8" />
+              <Ionicons name="chevron-forward-outline" size={18} color={colors.muted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -117,7 +118,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    color: '#64748b',
     marginBottom: 8,
     paddingHorizontal: 4,
     textTransform: 'uppercase',
@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   rowLeft: {
     flexDirection: 'row',
@@ -154,11 +153,9 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
   },
   rowSubtitle: {
     fontSize: 12,
-    color: '#64748b',
     marginTop: 2,
   },
   faqItem: {

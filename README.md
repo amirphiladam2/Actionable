@@ -1,17 +1,63 @@
-# Welcome to your Expo app 👋
+# Actionable - Task Tracker App 📱
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern, cross-platform task management application built with React Native and Expo, featuring Supabase integration for real-time data synchronization.
 
-## Get started
+## Features
 
-1. Install dependencies
+- ✅ **Task Management**: Create, edit, delete, and organize tasks
+- 🔐 **Authentication**: Secure user authentication with Supabase Auth
+- 📱 **Cross-Platform**: Works on iOS, Android, and Web
+- 🎨 **Modern UI**: Beautiful, responsive design with dark/light theme support
+- 🔔 **Notifications**: Push notifications for task reminders
+- 📊 **Progress Tracking**: Visual progress indicators and statistics
+- 🔍 **Smart Filtering**: Filter tasks by category, priority, and status
+- ☁️ **Real-time Sync**: Cloud synchronization across all devices
 
+## Screenshots
+
+### Mobile Screenshots
+<!-- Add your mobile screenshots here -->
+- `screenshots/mobile/` - Mobile app screenshots
+
+### Desktop Screenshots  
+<!-- Add your desktop screenshots here -->
+- `screenshots/desktop/` - Desktop/web app screenshots
+
+## Setup & Installation
+
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+- Expo CLI
+- Supabase account
+
+### Environment Setup
+
+1. Clone the repository
    ```bash
-   npm install
+   git clone https://github.com/amirphiladam2/Actionable.git
+   cd Actionable
    ```
 
-2. Start the app
+2. Install dependencies
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
+3. Create environment file
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Fill in your Supabase credentials in `.env`:
+   ```
+   SUPABASE_URL=your_supabase_project_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. Start the development server
    ```bash
    npx expo start
    ```
